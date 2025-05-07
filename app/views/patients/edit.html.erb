@@ -1,0 +1,8 @@
+<div class="max-w-2xl mx-auto mt-10 bg-white shadow rounded-lg p-8">
+  <h1 class="text-3xl font-bold mb-6 text-center">Editar Paciente</h1>
+  <%= render "form", patient: @patient %>
+  <div class="flex justify-between mt-8">
+    <%= link_to "Ver paciente", @patient, class: "btn btn-primary" %>
+    <%= link_to "Voltar para pacientes", patients_path, class: "btn btn-secondary" %>
+  </div>
+</div>

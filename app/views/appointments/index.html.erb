@@ -1,0 +1,33 @@
+<p style="color: green"><%= notice %></p>
+
+<h1>Agendamentos</h1>
+
+<div id="appointments">
+  <% @appointments.each do |appointment| %>
+    <%= render appointment %>
+    <p>
+      <%= link_to "Ver detalhes", appointment %>
+    </p>
+  <% end %>
+</div>
+
+<%= link_to "Novo agendamento", new_appointment_path %>
+
+<div class="max-w-5xl mx-auto mt-8">
+  <h2 class="text-2xl font-bold mb-4">Agenda Semanal</h2>
+  <%= week_calendar events: @appointments, attribute: :start_time, class: "bg-white rounded shadow p-4" do |date, appointments| %>
+    <div class="min-h-[80px]">
+      <% appointments.each do |appointment| %>
+        <div class="mb-2 p-2 rounded bg-indigo-100 border-l-4 border-indigo-500">
+          <strong><%= appointment.patient.name %></strong><br>
+          Profissional: <%= appointment.professional.name %><br>
+          Sala: <%= appointment.room.name %><br>
+          <span class="text-xs text-gray-600"><%= l(appointment.start_time, format: :short) %> - <%= appointment.duration %> min</span>
+          <div class="mt-1">
+            <%= link_to "Detalhes", appointment_path(appointment), class: "text-indigo-700 hover:underline text-xs" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

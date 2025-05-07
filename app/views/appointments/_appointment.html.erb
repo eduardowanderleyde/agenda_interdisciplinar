@@ -1,0 +1,10 @@
+<div id="appointment_<%= appointment.id %>" class="mb-2 p-2 rounded bg-indigo-100 border-l-4 border-indigo-500">
+  <strong><%= appointment.patient.name %></strong><br>
+  Profissional: <%= appointment.professional.name %><br>
+  Sala: <%= appointment.room.name %><br>
+  <span class="text-xs text-gray-600"><%= l(appointment.start_time, format: :short) %> - <%= appointment.duration %> min</span>
+  <div class="mt-1 flex gap-2">
+    <%= link_to "Detalhes", appointment_path(appointment), class: "text-indigo-700 hover:underline text-xs" %>
+    <%= link_to "Editar", edit_appointment_path(appointment), data: { turbo_frame: "modal" }, class: "text-blue-700 hover:underline text-xs" %>
+  </div>
+</div>

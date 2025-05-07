@@ -1,0 +1,32 @@
+<p style="color: green"><%= notice %></p>
+
+<div class="max-w-5xl mx-auto py-8">
+  <div class="flex items-center justify-between mb-8">
+    <h1 class="text-4xl font-bold text-gray-900">Pacientes</h1>
+    <%= link_to "+ Novo Paciente", new_patient_path, class: "bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2 rounded shadow" %>
+  </div>
+  <div class="bg-white rounded-xl shadow overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data de Nascimento</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Responsável</th>
+          <th class="px-6 py-3"></th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-100">
+        <% @patients.each do |patient| %>
+          <tr>
+            <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-800"><%= patient.name %></td>
+            <td class="px-6 py-4 whitespace-nowrap text-gray-700"><%= l(patient.birthdate, format: :default, locale: :'pt-BR') %></td>
+            <td class="px-6 py-4 whitespace-nowrap text-gray-700"><%= patient.responsible.presence || '-' %></td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <%= link_to "Ver detalhes", patient, class: "bg-white border border-gray-300 rounded px-3 py-1 text-sm font-medium text-gray-900 hover:bg-gray-50" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

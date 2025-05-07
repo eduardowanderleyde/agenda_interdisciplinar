@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Agenda Interdisciplinar</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload", "builds" => true %>
+    <%= javascript_include_tag "application", "data-turbo-track": "reload", defer: true %>
+  </head>
+
+  <body class="bg-gray-100 min-h-screen">
+    <%= render NavigationComponent.new %>
+
+    <% if notice %>
+      <div class="max-w-2xl mx-auto mt-4 p-2 bg-green-100 text-green-800 rounded"> <%= notice %> </div>
+    <% end %>
+    <% if alert %>
+      <div class="max-w-2xl mx-auto mt-4 p-2 bg-red-100 text-red-800 rounded"> <%= alert %> </div>
+    <% end %>
+
+    <%= turbo_frame_tag "modal" %>
+
+    <%= yield %>
+  </body>
+</html>

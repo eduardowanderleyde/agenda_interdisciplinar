@@ -1,0 +1,42 @@
+<%= simple_form_for(@patient) do |f| %>
+  <%= f.error_notification %>
+  <%= f.error_notification message: f.object.errors[:base].to_sentence if f.object.errors[:base].present? %>
+
+  <div class="form-inputs space-y-4">
+    <div>
+      <%= f.label :name, 'Nome', class: 'block font-semibold mb-1' %>
+      <%= f.input_field :name, class: 'form-input w-full rounded border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50', placeholder: 'Digite o nome completo' %>
+    </div>
+    <div>
+      <%= f.label :birthdate, 'Data de Nascimento', class: 'block font-semibold mb-1' %>
+      <%= f.input_field :birthdate, type: 'date', class: 'form-input w-full rounded border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50', placeholder: 'Selecione a data' %>
+    </div>
+    <div>
+      <%= f.label :diagnosis, 'Diagnóstico', class: 'block font-semibold mb-1' %>
+      <%= f.input_field :diagnosis, class: 'form-input w-full rounded border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50', placeholder: 'Ex: TEA, TDAH...' %>
+    </div>
+    <div>
+      <%= f.label :responsible, 'Responsável', class: 'block font-semibold mb-1' %>
+      <%= f.input_field :responsible, class: 'form-input w-full rounded border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50', placeholder: 'Nome do responsável' %>
+    </div>
+    <div>
+      <%= f.label :specialties, 'Especialidades Necessárias', class: 'block font-semibold mb-1' %>
+      <div class="flex flex-wrap gap-4">
+        <% Specialty.all.each do |specialty| %>
+          <label class="inline-flex items-center">
+            <%= check_box_tag 'patient[specialty_ids][]', specialty.id, @patient.specialty_ids.include?(specialty.id), class: 'form-checkbox text-indigo-600 rounded' %>
+            <span class="ml-2 text-sm"><%= specialty.name %></span>
+          </label>
+        <% end %>
+      </div>
+    </div>
+    <div>
+      <%= f.label :observations, 'Observações', class: 'block font-semibold mb-1' %>
+      <%= f.text_area :observations, class: 'form-textarea w-full rounded border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50', rows: 3, placeholder: 'Observações adicionais' %>
+    </div>
+  </div>
+
+  <div class="form-actions mt-6 flex justify-center">
+    <%= f.button :submit, 'Salvar', class: 'btn btn-primary px-6 py-2 rounded bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition' %>
+  </div>
+<% end %>

@@ -1,0 +1,10 @@
+<p style="color: green"><%= notice %></p>
+
+<%= render @evolution %>
+
+<div>
+  <%= link_to "Edit this evolution", edit_evolution_path(@evolution) %> |
+  <%= link_to "Back to evolutions", evolutions_path %>
+
+  <%= button_to "Destroy this evolution", @evolution, method: :delete %>
+</div>

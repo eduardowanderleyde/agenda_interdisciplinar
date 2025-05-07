@@ -1,0 +1,33 @@
+<%= stylesheet_link_tag 'devise_login', media: 'all' %>
+<div class="devise-login-bg">
+  <div class="devise-login-card">
+    <div class="devise-login-avatar">
+      <img src="https://www.svgrepo.com/show/382106/avatar-boy.svg" alt="Avatar" />
+    </div>
+    <h2 class="devise-login-title">Entrar na Clínica</h2>
+    <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: { class: 'devise-login-form' }) do |f| %>
+      <div class="devise-login-field">
+        <span class="devise-login-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 01-8 0m8 0a4 4 0 00-8 0m8 0V8a4 4 0 00-8 0v4m8 0v4a4 4 0 01-8 0v-4" /></svg>
+        </span>
+        <%= f.email_field :email, autofocus: true, autocomplete: "email", placeholder: "Email ID" %>
+      </div>
+      <div class="devise-login-field">
+        <span class="devise-login-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.104 0 2-.896 2-2s-.896-2-2-2-2 .896-2 2 .896 2 2 2zm0 2c-2.21 0-4 1.79-4 4v1h8v-1c0-2.21-1.79-4-4-4z"/></svg>
+        </span>
+        <%= f.password_field :password, autocomplete: "current-password", placeholder: "Password" %>
+      </div>
+      <% if devise_mapping.rememberable? %>
+        <div class="remember-me">
+          <%= f.check_box :remember_me %>
+          <span>Lembrar de mim</span>
+        </div>
+      <% end %>
+      <button type="submit">LOGIN</button>
+    <% end %>
+    <div class="devise-login-links">
+      <%= render "devise/shared/links" %>
+    </div>
+  </div>
+</div>

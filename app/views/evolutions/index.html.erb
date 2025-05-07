@@ -1,0 +1,14 @@
+<p style="color: green"><%= notice %></p>
+
+<h1>Evolutions</h1>
+
+<div id="evolutions">
+  <% @evolutions.each do |evolution| %>
+    <%= render evolution %>
+    <p>
+      <%= link_to "Show this evolution", evolution %>
+    </p>
+  <% end %>
+</div>
+
+<%= link_to "New evolution", new_evolution_path %>

@@ -1,0 +1,30 @@
+<%= simple_form_for(@appointment, html: { data: { controller: "appointment-form" } }) do |f| %>
+  <%= f.error_notification %>
+  <%= f.error_notification message: f.object.errors[:base].to_sentence if f.object.errors[:base].present? %>
+
+  <div class="form-inputs">
+    <%= f.association :patient %>
+    <%= f.association :professional, input_html: { data: { appointment_form_target: "professional", action: "change->appointment-form#updateTimes" } } %>
+    <%= f.association :room %>
+    <div class="mb-4">
+      <%= f.label :start_time, "Data do atendimento" %>
+      <%= f.input_field :start_time, type: :date, value: @appointment.start_time&.to_date, data: { appointment_form_target: "date", action: "change->appointment-form#updateTimes" }, class: "form-input" %>
+    </div>
+    <div class="mb-4">
+      <%= f.label :duration, "Duração (min)" %>
+      <%= f.select :duration, options_for_select([["30 minutos", 30], ["45 minutos", 45], ["1 hora", 60]], @appointment.duration), {}, data: { appointment_form_target: "duration", action: "change->appointment-form#updateTimes" }, class: "form-select" %>
+    </div>
+    <div class="mb-4">
+      <%= f.label :start_time, "Horário disponível" %>
+      <select name="appointment[start_time]" id="appointment_start_time" data-appointment-form-target="time" class="form-select">
+        <option value=""><%= @appointment.start_time&.strftime('%H:%M') || "Selecione" %></option>
+      </select>
+    </div>
+    <%= f.input :status %>
+    <%= f.input :notes %>
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit %>
+  </div>
+<% end %>

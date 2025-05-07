@@ -1,0 +1,13 @@
+default: &default
+  session_durations: [30, 45, 60, 90]
+  working_hours:
+    start: "08:00"
+    end: "18:00"
+  interval_minutes: 15
+
+development:
+  <<: *default
+production:
+  <<: *default
+test:
+  <<: *default 

@@ -1,0 +1,12 @@
+default: &default
+  name: "Clínica Interdisciplinar"
+  address: "Rua Exemplo, 123, Centro, Cidade"
+  phone: "(11) 99999-9999"
+  email: "contato@clinica.com"
+
+development:
+  <<: *default
+production:
+  <<: *default
+test:
+  <<: *default 

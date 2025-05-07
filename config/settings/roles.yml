@@ -1,0 +1,21 @@
+default: &default
+  admin:
+    description: "Administrador com acesso total"
+    permissions:
+      - gerenciar_tudo
+  profissional:
+    description: "Profissional interno"
+    permissions:
+      - agendar
+      - evoluir
+  externo:
+    description: "Profissional externo (restrito)"
+    permissions:
+      - evoluir
+
+development:
+  <<: *default
+production:
+  <<: *default
+test:
+  <<: *default 

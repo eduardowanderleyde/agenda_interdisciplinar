@@ -1,0 +1,76 @@
+<p style="color: green"><%= notice %></p>
+
+<div class="max-w-4xl mx-auto">
+  <div class="bg-white shadow rounded-lg p-6">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold"><%= @patient.name %></h1>
+      <div class="flex gap-2">
+        <%= link_to "Editar", edit_patient_path(@patient), class: "btn btn-primary" %>
+        <%= button_to "Excluir", @patient, method: :delete, class: "btn btn-danger", data: { confirm: "Tem certeza?" } %>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-6">
+      <div>
+        <h2 class="text-lg font-semibold mb-4">Informações Pessoais</h2>
+        <dl class="space-y-2">
+          <div>
+            <dt class="text-sm font-medium text-gray-500">Data de Nascimento</dt>
+            <dd><%= l(@patient.birthdate, format: :long) %></dd>
+          </div>
+          <div>
+            <dt class="text-sm font-medium text-gray-500">Diagnóstico</dt>
+            <dd><%= @patient.diagnosis %></dd>
+          </div>
+          <div>
+            <dt class="text-sm font-medium text-gray-500">Responsável</dt>
+            <dd><%= @patient.responsible %></dd>
+          </div>
+        </dl>
+      </div>
+
+      <div>
+        <h2 class="text-lg font-semibold mb-4">Especialidades Necessárias</h2>
+        <div class="space-y-2">
+          <% @patient.specialties.each do |specialty| %>
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                <%= specialty.name %>
+              </span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-6">
+      <h2 class="text-lg font-semibold mb-4">Observações</h2>
+      <div class="prose max-w-none">
+        <%= simple_format(@patient.observations) %>
+      </div>
+    </div>
+
+    <div class="mt-8">
+      <h2 class="text-lg font-semibold mb-4">Agendamentos</h2>
+      <div class="space-y-4">
+        <% @patient.appointments.includes(:professional, :room).order(start_time: :desc).each do |appointment| %>
+          <div class="bg-gray-50 rounded-lg p-4">
+            <div class="flex justify-between items-start">
+              <div>
+                <h3 class="font-medium"><%= l(appointment.start_time, format: :long) %></h3>
+                <p class="text-sm text-gray-600">
+                  Profissional: <%= appointment.professional.name %><br>
+                  Sala: <%= appointment.room.name %><br>
+                  Duração: <%= appointment.duration %> minutos
+                </p>
+              </div>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= appointment.status == 'realizado' ? 'bg-green-100 text-green-800' : appointment.status == 'cancelado' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800' %>">
+                <%= appointment.status.titleize %>
+              </span>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
