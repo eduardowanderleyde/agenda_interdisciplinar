@@ -1,33 +1,76 @@
-<p style="color: green"><%= notice %></p>
+<div class="min-h-screen bg-gray-100 py-8">
+  <div class="max-w-7xl mx-auto">
+    <p style="color: green"><%= notice %></p>
 
-<h1>Agendamentos</h1>
-
-<div id="appointments">
-  <% @appointments.each do |appointment| %>
-    <%= render appointment %>
-    <p>
-      <%= link_to "Ver detalhes", appointment %>
-    </p>
-  <% end %>
-</div>
-
-<%= link_to "Novo agendamento", new_appointment_path %>
-
-<div class="max-w-5xl mx-auto mt-8">
-  <h2 class="text-2xl font-bold mb-4">Agenda Semanal</h2>
-  <%= week_calendar events: @appointments, attribute: :start_time, class: "bg-white rounded shadow p-4" do |date, appointments| %>
-    <div class="min-h-[80px]">
-      <% appointments.each do |appointment| %>
-        <div class="mb-2 p-2 rounded bg-indigo-100 border-l-4 border-indigo-500">
-          <strong><%= appointment.patient.name %></strong><br>
-          Profissional: <%= appointment.professional.name %><br>
-          Sala: <%= appointment.room.name %><br>
-          <span class="text-xs text-gray-600"><%= l(appointment.start_time, format: :short) %> - <%= appointment.duration %> min</span>
-          <div class="mt-1">
-            <%= link_to "Detalhes", appointment_path(appointment), class: "text-indigo-700 hover:underline text-xs" %>
-          </div>
-        </div>
-      <% end %>
+    <!-- Formulário de novo agendamento -->
+    <div class="max-w-2xl mx-auto mb-10 p-8 bg-white rounded-2xl shadow-xl border border-indigo-100">
+      <h2 class="text-2xl font-bold text-indigo-900 mb-6 text-center">Novo Agendamento</h2>
+      <%= render 'form', appointment: @appointment || Appointment.new %>
     </div>
-  <% end %>
+
+    <div class="bg-white shadow-xl rounded-2xl p-8 mb-8">
+      <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <h1 class="text-4xl font-bold text-indigo-900">Agendamentos</h1>
+        <%= link_to new_appointment_path, class: "flex items-center gap-2 bg-indigo-700 text-white px-8 py-4 rounded-xl shadow-md hover:bg-indigo-800 transition duration-300 text-lg" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+          </svg>
+          Novo agendamento
+        <% end %>
+      </div>
+
+      <div class="bg-indigo-50 rounded-xl p-6 mb-8 border border-indigo-100">
+        <%= form_with url: appointments_path, method: :get, local: true, class: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6" do |f| %>
+          <div class="space-y-2">
+            <%= f.label :professional_id, "Profissional", class: "block text-base font-semibold text-indigo-900" %>
+            <%= f.select :professional_id, 
+                options_from_collection_for_select(Professional.all, :id, :name, params[:professional_id]), 
+                { include_blank: "Todos" }, 
+                class: "w-full rounded-lg border-indigo-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-base bg-white" %>
+          </div>
+          <div class="space-y-2">
+            <%= f.label :patient_id, "Paciente", class: "block text-base font-semibold text-indigo-900" %>
+            <%= f.select :patient_id, 
+                options_from_collection_for_select(Patient.all, :id, :name, params[:patient_id]), 
+                { include_blank: "Todos" }, 
+                class: "w-full rounded-lg border-indigo-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-base bg-white" %>
+          </div>
+          <div class="space-y-2">
+            <%= f.label :room_id, "Sala", class: "block text-base font-semibold text-indigo-900" %>
+            <%= f.select :room_id, 
+                options_from_collection_for_select(Room.all, :id, :name, params[:room_id]), 
+                { include_blank: "Todas" }, 
+                class: "w-full rounded-lg border-indigo-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-base bg-white" %>
+          </div>
+          <div class="space-y-2">
+            <%= f.label :date, "Data", class: "block text-base font-semibold text-indigo-900" %>
+            <%= f.date_field :date, 
+                value: params[:date], 
+                class: "w-full rounded-lg border-indigo-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-base bg-white" %>
+          </div>
+          <div class="flex items-end">
+            <%= f.submit "Filtrar", 
+                class: "w-full bg-indigo-700 text-white px-6 py-3 rounded-lg hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-300 text-base font-medium" %>
+          </div>
+        <% end %>
+      </div>
+
+      <div id="appointments" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <% if @appointments.any? %>
+          <% @appointments.each do |appointment| %>
+            <div class="bg-white rounded-2xl shadow-md border border-indigo-100 hover:shadow-xl transition duration-300">
+              <%= render appointment %>
+            </div>
+          <% end %>
+        <% else %>
+          <div class="col-span-full flex flex-col items-center justify-center py-16">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-indigo-200 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <p class="text-lg text-indigo-400 font-semibold">Nenhum agendamento encontrado para os filtros selecionados.</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
 </div>

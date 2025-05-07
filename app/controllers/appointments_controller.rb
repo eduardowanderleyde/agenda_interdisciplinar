@@ -4,7 +4,21 @@ class AppointmentsController < ApplicationController
 
   # GET /appointments or /appointments.json
   def index
+    @appointment = Appointment.new
     @appointments = Appointment.includes(:patient, :professional, :room).all
+    @appointments = @appointments.where(professional_id: params[:professional_id]) if params[:professional_id].present?
+    @appointments = @appointments.where(patient_id: params[:patient_id]) if params[:patient_id].present?
+    @appointments = @appointments.where(room_id: params[:room_id]) if params[:room_id].present?
+    return unless params[:date].present?
+
+    date = begin
+      Date.parse(params[:date])
+    rescue StandardError
+      nil
+    end
+    return unless date
+
+    @appointments = @appointments.where(start_time: date.beginning_of_day..date.end_of_day)
   end
 
   # GET /appointments/1 or /appointments/1.json

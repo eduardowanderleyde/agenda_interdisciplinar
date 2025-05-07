@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  get 'sortear/index'
   root 'home#index'
 
   devise_for :users
@@ -26,4 +27,8 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   # root "posts#index"
+
+  get 'organizar', to: 'organizar#index', as: :organizar
+  post 'organizar/escolher', to: 'organizar#escolher', as: :escolher_agenda
+  get 'organizar/confirmar', to: 'organizar#confirmar', as: :confirmar_agenda
 end

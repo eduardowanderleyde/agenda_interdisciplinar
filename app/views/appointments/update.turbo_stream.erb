@@ -1,6 +1,6 @@
 <turbo-stream action="replace" target="appointment_<%= @appointment.id %>">
   <template>
-    <%= render @appointment %>
+    <%= render partial: "appointment", formats: [:html], locals: { appointment: @appointment } %>
   </template>
 </turbo-stream>
 <turbo-stream action="update" target="modal">

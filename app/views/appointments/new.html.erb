@@ -1,9 +1,7 @@
-<h1>New appointment</h1>
-
-<%= render "form", appointment: @appointment %>
-
-<br>
-
-<div>
-  <%= link_to "Back to appointments", appointments_path %>
+<div class="max-w-xl mx-auto mt-16 p-8 bg-white rounded shadow">
+  <h1 class="text-3xl font-bold mb-8 text-indigo-700">Novo Agendamento</h1>
+  <%= render 'form', appointment: @appointment %>
+  <div class="mt-8 text-center">
+    <%= link_to 'Voltar para agendamentos', appointments_path, class: 'text-indigo-600 hover:underline text-lg' %>
+  </div>
 </div>

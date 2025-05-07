@@ -1,0 +1,151 @@
+<div class="max-w-2xl mx-auto mt-10 p-6 bg-white rounded shadow">
+  <h1 class="text-2xl font-bold mb-4 text-indigo-700">Organizar Agenda</h1>
+  <p class="mb-4">Selecione a semana, um profissional ou paciente para visualizar horários livres e salas disponíveis.</p>
+
+  <%= form_with url: organizar_path, method: :get, local: true, class: "space-y-4" do |f| %>
+    <div>
+      <label class="block font-semibold mb-1">Semana</label>
+      <%= f.date_field :start_date, class: "border rounded p-2 w-48" %>
+    </div>
+  <% end %>
+
+  <div class="mt-6">
+    <label class="block font-semibold mb-2">Profissionais</label>
+    <ul>
+      <% @professionals.each do |prof| %>
+        <li class="flex items-center mb-2">
+          <span class="mr-2"><%= prof.name %></span>
+          <%= button_to 'Ver horários livres', organizar_path(start_date: params[:start_date], professional_id: prof.id), method: :get, class: "ml-2 bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700" %>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+
+  <div class="mt-6">
+    <label class="block font-semibold mb-2">Pacientes</label>
+    <ul>
+      <% @patients.each do |pat| %>
+        <li class="flex items-center mb-2">
+          <span class="mr-2"><%= pat.name %></span>
+          <%= button_to 'Ver horários livres', organizar_path(start_date: params[:start_date], patient_id: pat.id), method: :get, class: "ml-2 bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700" %>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+</div>
+
+<% if @horarios_livres_profissional.present? %>
+  <div class="max-w-2xl mx-auto mt-8 p-6 bg-white rounded shadow">
+    <h2 class="text-xl font-bold mb-4 text-indigo-700">Horários livres para <%= @profissional.name %> na semana de <%= params[:start_date] %></h2>
+    <table class="w-full text-sm mb-2">
+      <thead>
+        <tr class="border-b">
+          <th class="text-left">Horário</th>
+          <th class="text-left">Salas disponíveis</th>
+          <th class="text-left">Paciente</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @horarios_livres_profissional.each do |horario, salas| %>
+          <tr>
+            <td><%= horario %></td>
+            <td>
+              <%= form_with url: appointments_path, method: :post, local: true do |f| %>
+                <%= hidden_field_tag :start_time, horario %>
+                <%= hidden_field_tag :professional_id, @profissional.id %>
+                <%= select_tag :room_id, options_for_select(Room.where(name: salas).pluck(:name, :id)), class: "border rounded p-1" %>
+                <%= select_tag :duration, options_for_select([["30 min", 30], ["45 min", 45], ["60 min", 60]], 30), class: "border rounded p-1 ml-2" %>
+            </td>
+            <td>
+                <%= select_tag :patient_id, options_from_collection_for_select(@patients, :id, :name), class: "border rounded p-1" %>
+            </td>
+            <td>
+                <%= f.submit "Adicionar", class: "bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>
+
+<% if @horarios_livres_paciente.present? %>
+  <div class="max-w-2xl mx-auto mt-8 p-6 bg-white rounded shadow">
+    <h2 class="text-xl font-bold mb-4 text-green-700">Horários livres para <%= @paciente.name %> na semana de <%= params[:start_date] %></h2>
+    <table class="w-full text-sm mb-2">
+      <thead>
+        <tr class="border-b">
+          <th class="text-left">Horário</th>
+          <th class="text-left">Profissionais disponíveis</th>
+          <th class="text-left">Salas disponíveis</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @horarios_livres_paciente.each do |horario, dados| %>
+          <tr>
+            <td><%= horario %></td>
+            <td>
+              <%= form_with url: appointments_path, method: :post, local: true do |f| %>
+                <%= hidden_field_tag :start_time, horario %>
+                <%= hidden_field_tag :patient_id, @paciente.id %>
+                <%= select_tag :professional_id, options_for_select(Professional.where(name: dados[:profissionais]).pluck(:name, :id)), class: "border rounded p-1" %>
+                <%= select_tag :duration, options_for_select([["30 min", 30], ["45 min", 45], ["60 min", 60]], 30), class: "border rounded p-1 ml-2" %>
+            </td>
+            <td>
+                <%= select_tag :room_id, options_for_select(Room.where(name: dados[:salas]).pluck(:name, :id)), class: "border rounded p-1" %>
+            </td>
+            <td>
+                <%= f.submit "Adicionar", class: "bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>
+
+<div class="max-w-4xl mx-auto mt-8">
+  <h2 class="text-xl font-bold mb-4 text-indigo-700">Opções de Agendas Geradas</h2>
+  <% if @agendas.present? %>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <% @agendas.each do |agenda| %>
+        <div class="bg-white rounded shadow p-4">
+          <h3 class="font-semibold text-indigo-600 mb-2">Agenda Opção <%= agenda["opcao"] %></h3>
+          <p class="mb-2 text-gray-700"><%= agenda["descricao"] %></p>
+          <table class="w-full text-sm mb-2">
+            <thead>
+              <tr class="border-b">
+                <th class="text-left">Sala</th>
+                <th class="text-left">Profissional</th>
+                <th class="text-left">Paciente</th>
+                <th class="text-left">Início</th>
+                <th class="text-left">Fim</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% agenda["slots"].each do |slot| %>
+                <tr>
+                  <td><%= slot["sala"] %></td>
+                  <td><%= slot["profissional"] %></td>
+                  <td><%= slot["paciente"] %></td>
+                  <td><%= slot["inicio"] %></td>
+                  <td><%= slot["fim"] %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+          <%= form_with url: escolher_agenda_path, method: :post, local: true do |f| %>
+            <%= hidden_field_tag :agenda, agenda.to_json %>
+            <%= f.submit "Escolher esta agenda", class: "bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="text-gray-500">Nenhuma agenda gerada ainda. Preencha os filtros e clique em "Organizar".</p>
+  <% end %>
+</div>

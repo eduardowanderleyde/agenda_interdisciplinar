@@ -1,0 +1,56 @@
+<div class="max-w-3xl mx-auto mt-10 p-6 bg-white rounded shadow">
+  <h1 class="text-2xl font-bold mb-4 text-indigo-700">Confirmar Agenda</h1>
+  <p class="mb-4">Confira os agendamentos que serão criados. Conflitos serão destacados em vermelho.</p>
+
+  <table class="w-full text-sm mb-4">
+    <thead>
+      <tr class="border-b">
+        <th class="text-left">Sala</th>
+        <th class="text-left">Profissional</th>
+        <th class="text-left">Paciente</th>
+        <th class="text-left">Início</th>
+        <th class="text-left">Fim</th>
+        <th class="text-left">Conflito</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @agenda["slots"].each do |slot| %>
+        <% conflito = @conflitos.find { |c| c[:slot] == slot } %>
+        <tr class="<%= conflito ? 'bg-red-100' : '' %>">
+          <td><%= slot["sala"] %></td>
+          <td><%= slot["profissional"] %></td>
+          <td><%= slot["paciente"] %></td>
+          <td><%= slot["inicio"] %></td>
+          <td><%= slot["fim"] %></td>
+          <td>
+            <% if conflito %>
+              <span class="text-red-600 font-semibold">Conflito:
+                <% if conflito[:prof_conflict] %>Profissional <% end %>
+                <% if conflito[:room_conflict] %>Sala<% end %>
+              </span>
+            <% else %>
+              <span class="text-green-600">OK</span>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <% if @conflitos.any? %>
+    <div class="mb-4 p-2 bg-red-200 text-red-800 rounded">
+      Existem conflitos! Ajuste a agenda ou escolha outra opção.
+    </div>
+  <% else %>
+    <%= form_with url: escolher_agenda_path, method: :post, local: true do |f| %>
+      <%= hidden_field_tag :agenda, @agenda.to_json %>
+      <div class="mb-4">
+        <%= f.label :notes, "Observação geral para esta agenda", class: "block font-semibold mb-1" %>
+        <%= f.text_area :notes, rows: 2, class: "border rounded p-2 w-full" %>
+      </div>
+      <%= f.submit "Confirmar e Salvar Agenda", class: "bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" %>
+    <% end %>
+  <% end %>
+
+  <%= link_to "Voltar", organizar_path, class: "text-indigo-600 hover:underline" %>
+</div> 

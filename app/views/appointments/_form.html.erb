@@ -1,30 +1,39 @@
-<%= simple_form_for(@appointment, html: { data: { controller: "appointment-form" } }) do |f| %>
+<%= simple_form_for(@appointment, html: { data: { controller: "appointment-form" }, class: "space-y-6" }) do |f| %>
   <%= f.error_notification %>
   <%= f.error_notification message: f.object.errors[:base].to_sentence if f.object.errors[:base].present? %>
 
-  <div class="form-inputs">
-    <%= f.association :patient %>
-    <%= f.association :professional, input_html: { data: { appointment_form_target: "professional", action: "change->appointment-form#updateTimes" } } %>
-    <%= f.association :room %>
-    <div class="mb-4">
-      <%= f.label :start_time, "Data do atendimento" %>
-      <%= f.input_field :start_time, type: :date, value: @appointment.start_time&.to_date, data: { appointment_form_target: "date", action: "change->appointment-form#updateTimes" }, class: "form-input" %>
+  <div class="form-inputs space-y-6">
+    <div>
+      <%= f.label :patient_id, "Paciente", class: "block font-semibold mb-2 text-indigo-900" %>
+      <%= f.association :patient, input_html: { class: "border rounded-lg p-2 w-full bg-white focus:ring-2 focus:ring-indigo-500" }, prompt: "Selecione o paciente" %>
     </div>
-    <div class="mb-4">
-      <%= f.label :duration, "Duração (min)" %>
-      <%= f.select :duration, options_for_select([["30 minutos", 30], ["45 minutos", 45], ["1 hora", 60]], @appointment.duration), {}, data: { appointment_form_target: "duration", action: "change->appointment-form#updateTimes" }, class: "form-select" %>
+    <div>
+      <%= f.label :professional_id, "Profissional", class: "block font-semibold mb-2 text-indigo-900" %>
+      <%= f.association :professional, input_html: { class: "border rounded-lg p-2 w-full bg-white focus:ring-2 focus:ring-indigo-500", data: { appointment_form_target: "professional", action: "change->appointment-form#updateTimes" } }, prompt: "Selecione o profissional" %>
     </div>
-    <div class="mb-4">
-      <%= f.label :start_time, "Horário disponível" %>
-      <select name="appointment[start_time]" id="appointment_start_time" data-appointment-form-target="time" class="form-select">
-        <option value=""><%= @appointment.start_time&.strftime('%H:%M') || "Selecione" %></option>
-      </select>
+    <div>
+      <%= f.label :room_id, "Sala", class: "block font-semibold mb-2 text-indigo-900" %>
+      <%= f.association :room, input_html: { class: "border rounded-lg p-2 w-full bg-white focus:ring-2 focus:ring-indigo-500" }, prompt: "Selecione a sala" %>
     </div>
-    <%= f.input :status %>
-    <%= f.input :notes %>
+    <div>
+      <%= f.label :start_time, "Data do atendimento", class: "block font-semibold mb-2 text-indigo-900" %>
+      <%= f.input_field :start_time, type: :date, value: @appointment.start_time&.to_date, data: { appointment_form_target: "date", action: "change->appointment-form#updateTimes" }, class: "border rounded-lg p-2 w-full bg-white focus:ring-2 focus:ring-indigo-500" %>
+    </div>
+    <div>
+      <%= f.label :duration, "Duração da sessão", class: "block font-semibold mb-2 text-indigo-900" %>
+      <%= f.select :duration, options_for_select([["30 minutos", 30], ["45 minutos", 45], ["1 hora", 60]], @appointment.duration), {}, data: { appointment_form_target: "duration", action: "change->appointment-form#updateTimes" }, class: "border rounded-lg p-2 w-full bg-white focus:ring-2 focus:ring-indigo-500" %>
+    </div>
+    <div>
+      <%= f.label :status, "Status", class: "block font-semibold mb-2 text-indigo-900" %>
+      <%= f.input :status, input_html: { class: "border rounded-lg p-2 w-full bg-white focus:ring-2 focus:ring-indigo-500" }, placeholder: "Ex: realizado, pendente, cancelado" %>
+    </div>
+    <div>
+      <%= f.label :notes, "Observações", class: "block font-semibold mb-2 text-indigo-900" %>
+      <%= f.input :notes, input_html: { class: "border rounded-lg p-2 w-full bg-white focus:ring-2 focus:ring-indigo-500" }, placeholder: "Observações gerais do atendimento" %>
+    </div>
   </div>
 
-  <div class="form-actions">
-    <%= f.button :submit %>
+  <div class="form-actions mt-8 text-center">
+    <%= f.button :submit, "Salvar", class: "bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 text-lg font-bold shadow transition" %>
   </div>
 <% end %>
