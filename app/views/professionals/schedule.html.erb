@@ -154,9 +154,16 @@
                 <% if appt.start_time.to_date == day && appt_time == hour %>
                   <% slot_span = (appt.duration / 30.0).round %>
                   <div class="calendar-event <%= appt.duration < 45 ? 'orange' : 'green' %>"
-                       style="height: calc(40px * <%= slot_span %> + 4px * (<%= slot_span-1 %>)); top: 4px;">
-                    <strong><%= appt.patient&.name || 'Paciente' %></strong>
-                    <div style="font-size:0.95em;">
+                       style="height: calc(40px * <%= slot_span %> + 4px * (<%= slot_span-1 %>)); top: 4px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center;">
+                    <div style="font-weight: bold; font-size: 1.08em; color: #1e293b; margin-bottom: 2px;">
+                      <%= appt.patient&.name || 'Paciente' %>
+                    </div>
+                    <% if appt.specialty&.name.present? %>
+                      <div style="font-size: 0.98em; color: #6366f1; font-weight: 600; margin-bottom: 2px;">
+                        <%= appt.specialty.name %>
+                      </div>
+                    <% end %>
+                    <div style="font-size:0.95em; color: #475569;">
                       <%= appt.notes || appt.diagnosis || 'Sessão' %> <%= appt.duration %> min
                     </div>
                     <div class="calendar-tooltip">
@@ -164,6 +171,7 @@
                       <strong>Data:</strong> <%= l(appt.start_time, format: :long, locale: :'pt-BR') %><br>
                       <strong>Duração:</strong> <%= appt.duration %> minutos<br>
                       <strong>Profissional:</strong> <%= @professional.name %><br>
+                      <strong>Especialidade:</strong> <%= appt.specialty&.name %><br>
                       <strong>Observações:</strong> <%= appt.notes || '-' %>
                     </div>
                   </div>

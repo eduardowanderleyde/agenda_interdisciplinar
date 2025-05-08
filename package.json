@@ -2,7 +2,9 @@
   "name": "app",
   "private": true,
   "devDependencies": {
-    "esbuild": "^0.25.4"
+    "esbuild": "^0.25.4",
+    "vite": "^5.0.0",
+    "vite-plugin-ruby": "^5.1.0"
   },
   "scripts": {
     "build": "esbuild app/javascript/*.* --bundle --sourcemap --format=esm --outdir=app/assets/builds --public-path=/assets",

@@ -12,3 +12,6 @@ application.register("appointment-form", AppointmentFormController)
 
 import ModalController from "./modal_controller"
 application.register("modal", ModalController)
+
+import HorariosController from "./horarios_controller"
+application.register("horarios", HorariosController)

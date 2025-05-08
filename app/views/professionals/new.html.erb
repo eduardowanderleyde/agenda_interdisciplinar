@@ -1,9 +1,9 @@
-<h1>New professional</h1>
-
-<%= render "form", professional: @professional %>
-
-<br>
-
-<div>
-  <%= link_to "Back to professionals", professionals_path %>
+<div style="background-color: #f9fafb; min-height: 100vh; padding-top: 40px; padding-bottom: 40px;">
+  <div class="max-w-xl mx-auto p-8 bg-white rounded shadow">
+    <h1 class="text-3xl font-bold mb-8 text-indigo-800 text-center">Tela para Adicionar Novo Profissional</h1>
+    <%= render 'form', professional: @professional %>
+    <div class="mt-8 text-center">
+      <%= link_to 'Voltar para a lista de profissionais', professionals_path, class: 'text-indigo-600 hover:underline text-lg' %>
+    </div>
+  </div>
 </div>

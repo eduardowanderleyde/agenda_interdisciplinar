@@ -1,0 +1,10 @@
+<div class="space-y-2">
+  <%= form.label label, class: "block text-sm font-medium text-gray-700" %>
+  <%= form.send(field_type, field, class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 #{error_class if local_assigns[:error_class]}") %>
+  <% if local_assigns[:error_message] %>
+    <p class="text-sm text-red-600"><%= error_message %></p>
+  <% end %>
+  <% if local_assigns[:hint] %>
+    <p class="text-sm text-gray-500"><%= hint %></p>
+  <% end %>
+</div> 

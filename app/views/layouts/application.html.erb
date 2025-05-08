@@ -7,21 +7,42 @@
     <%= csp_meta_tag %>
 
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload", "builds" => true %>
-    <%= javascript_include_tag "application", "data-turbo-track": "reload", defer: true %>
+    <%= vite_client_tag %>
+    <%= vite_javascript_tag "application" %>
+    <%= vite_client_tag %>
+    <%= vite_javascript_tag 'application' %>
+    <!--
+      If using a TypeScript entrypoint file:
+        vite_typescript_tag 'application'
+
+      If using a .jsx or .tsx entrypoint, add the extension:
+        vite_javascript_tag 'application.jsx'
+
+      Visit the guide for more information: https://vite-ruby.netlify.app/guide/rails
+    -->
+
   </head>
 
   <body class="bg-gray-100 min-h-screen">
     <%= render NavigationComponent.new %>
 
+    <main class="container mx-auto px-4 py-8">
     <% if notice %>
-      <div class="max-w-2xl mx-auto mt-4 p-2 bg-green-100 text-green-800 rounded"> <%= notice %> </div>
+        <div class="max-w-4xl mx-auto mb-6 p-4 bg-green-100 text-green-800 rounded-lg shadow-sm">
+          <%= notice %>
+        </div>
     <% end %>
     <% if alert %>
-      <div class="max-w-2xl mx-auto mt-4 p-2 bg-red-100 text-red-800 rounded"> <%= alert %> </div>
+        <div class="max-w-4xl mx-auto mb-6 p-4 bg-red-100 text-red-800 rounded-lg shadow-sm">
+          <%= alert %>
+        </div>
     <% end %>
 
     <%= turbo_frame_tag "modal" %>
 
+      <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-sm p-6">
     <%= yield %>
+      </div>
+    </main>
   </body>
 </html>

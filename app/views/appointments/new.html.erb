@@ -1,7 +1,9 @@
-<div class="max-w-xl mx-auto mt-16 p-8 bg-white rounded shadow">
-  <h1 class="text-3xl font-bold mb-8 text-indigo-700">Novo Agendamento</h1>
-  <%= render 'form', appointment: @appointment %>
-  <div class="mt-8 text-center">
-    <%= link_to 'Voltar para agendamentos', appointments_path, class: 'text-indigo-600 hover:underline text-lg' %>
+<div style="background-color: #f9fafb; min-height: 100vh; padding-top: 40px; padding-bottom: 40px;">
+  <div class="max-w-xl mx-auto p-8 bg-white rounded shadow">
+    <h1 class="text-3xl font-bold mb-8 text-indigo-700">Novo Agendamento</h1>
+    <%= render 'form', appointment: @appointment %>
+    <div class="mt-8 text-center">
+      <%= link_to 'Voltar para agendamentos', appointments_path, class: 'text-indigo-600 hover:underline text-lg' %>
+    </div>
   </div>
 </div>

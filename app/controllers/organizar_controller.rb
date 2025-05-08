@@ -65,6 +65,33 @@ class OrganizarController < ApplicationController
     else
       @agendas = []
     end
+
+    # --- NOVO BLOCO: Popula agendamentos reais para o planner semanal ---
+    return unless params[:start_date].present?
+
+    dias = (0..6).map { |i| Date.parse(params[:start_date]) + i.days }
+    @agendamentos_por_sala_e_dia = {}
+
+    Room.all.each do |sala|
+      @agendamentos_por_sala_e_dia[sala.id] = {}
+      dias.each do |dia|
+        ags = Appointment.where(room: sala)
+                         .where(start_time: dia.beginning_of_day..dia.end_of_day)
+                         .includes(:patient, :professional, :specialty)
+                         .order(:start_time)
+        @agendamentos_por_sala_e_dia[sala.id][dia] = ags.map do |ag|
+          {
+            dia_semana: I18n.l(ag.start_time, format: '%A'),
+            hora: ag.start_time.strftime('%H:%M'),
+            paciente: ag.patient&.name,
+            profissional: ag.professional&.name,
+            especialidade: ag.specialty&.name
+          }
+        end
+      end
+    end
+
+    # --- FIM DO NOVO BLOCO ---
   end
 
   def escolher

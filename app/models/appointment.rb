@@ -2,6 +2,7 @@ class Appointment < ApplicationRecord
   belongs_to :patient
   belongs_to :professional
   belongs_to :room
+  belongs_to :specialty
   has_many :evolutions
 
   validate :no_time_conflict

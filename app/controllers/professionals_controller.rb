@@ -115,6 +115,15 @@ class ProfessionalsController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def professional_params
-    params.require(:professional).permit(:name, :available_days, :available_hours, specialty_ids: [])
+    params.require(:professional).permit(
+      :name,
+      :default_session_duration,
+      available_days: [],
+      available_hours: [],
+      specialty_ids: []
+    ).tap do |whitelisted|
+      whitelisted[:available_days]&.reject!(&:blank?)
+      whitelisted[:available_hours]&.reject!(&:blank?)
+    end
   end
 end

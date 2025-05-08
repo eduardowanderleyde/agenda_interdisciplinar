@@ -6,6 +6,13 @@ class Professional < ApplicationRecord
   has_many :specialties, through: :professional_specialties
 
   validates :name, presence: true
-  validates :specialty, presence: true
   validates :available_days, presence: true
+
+  after_initialize :set_defaults
+
+  private
+
+  def set_defaults
+    self.available_hours ||= []
+  end
 end

@@ -1,0 +1,23 @@
+<%= form_with(model: model, class: "space-y-6") do |form| %>
+  <% if model.errors.any? %>
+    <div class="bg-red-50 p-4 rounded-lg mb-6">
+      <h2 class="text-red-800 font-medium mb-2">
+        <%= pluralize(model.errors.count, "erro") %> impediram este registro de ser salvo:
+      </h2>
+      <ul class="list-disc list-inside text-red-600">
+        <% model.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="space-y-4">
+    <%= yield form %>
+  </div>
+
+  <div class="flex items-center justify-end space-x-4 pt-4 border-t">
+    <%= link_to "Cancelar", :back, class: "px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors" %>
+    <%= form.submit class: "px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors" %>
+  </div>
+<% end %> 
