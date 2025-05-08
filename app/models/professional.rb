@@ -10,9 +10,25 @@ class Professional < ApplicationRecord
 
   after_initialize :set_defaults
 
+  # Garante que available_hours seja sempre um hash com os dias da semana
+  def available_hours
+    super.presence || {}
+  end
+
+  def hours_for(day)
+    available_hours[day.to_s] || []
+  end
+
+  def add_hour_for(day, interval)
+    h = available_hours
+    h[day.to_s] ||= []
+    h[day.to_s] << interval
+    self.available_hours = h
+  end
+
   private
 
   def set_defaults
-    self.available_hours ||= []
+    self.available_hours ||= {}
   end
 end

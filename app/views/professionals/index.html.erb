@@ -33,7 +33,18 @@
               <%= dias.presence || '-' %>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-gray-700">
-              <% horarios = (professional.available_hours || []).join(', ') %>
+              <% dias_semana_lista = [
+                ['monday', 'Segunda'],
+                ['tuesday', 'Terça'],
+                ['wednesday', 'Quarta'],
+                ['thursday', 'Quinta'],
+                ['friday', 'Sexta']
+              ] %>
+              <% ah = professional.available_hours.is_a?(Hash) ? professional.available_hours : {} %>
+              <% horarios = dias_semana_lista.map do |dia_key, dia_label|
+                hs = (ah[dia_key] || [])
+                hs.any? ? "#{dia_label}: #{hs.join(', ')}" : nil
+              end.compact.join(' | ') %>
               <%= horarios.presence || '-' %>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-center bg-gray-50">

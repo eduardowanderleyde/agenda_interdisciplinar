@@ -40,10 +40,25 @@
           <div>
             <dt class="text-sm font-medium text-gray-500">Horários Disponíveis</dt>
             <dd>
-              <% (@professional.available_hours || []).each do |hour| %>
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                  <%= hour %>
-                </span>
+              <% dias_semana = [
+                ['monday', 'Segunda'],
+                ['tuesday', 'Terça'],
+                ['wednesday', 'Quarta'],
+                ['thursday', 'Quinta'],
+                ['friday', 'Sexta']
+              ] %>
+              <% dias_semana.each do |dia_key, dia_label| %>
+                <% horarios = @professional.available_hours[dia_key] || [] %>
+                <% if horarios.any? %>
+                  <div class="mb-1">
+                    <span class="font-semibold text-gray-700"><%= dia_label %>:</span>
+                    <% horarios.each do |intervalo| %>
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 ml-1">
+                        <%= intervalo %>
+                      </span>
+                    <% end %>
+                  </div>
+                <% end %>
               <% end %>
             </dd>
           </div>

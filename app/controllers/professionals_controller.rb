@@ -119,11 +119,10 @@ class ProfessionalsController < ApplicationController
       :name,
       :default_session_duration,
       available_days: [],
-      available_hours: [],
+      available_hours: {},
       specialty_ids: []
     ).tap do |whitelisted|
       whitelisted[:available_days]&.reject!(&:blank?)
-      whitelisted[:available_hours]&.reject!(&:blank?)
     end
   end
 end
