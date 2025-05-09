@@ -1,5 +1,5 @@
 class Patient < ApplicationRecord
-  has_many :appointments
+  has_many :appointments, dependent: :destroy
   has_many :evolutions, through: :appointments
   has_many :patient_specialties, dependent: :destroy
   has_many :specialties, through: :patient_specialties
