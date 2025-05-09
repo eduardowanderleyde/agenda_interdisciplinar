@@ -7,6 +7,7 @@ class Appointment < ApplicationRecord
 
   validate :no_time_conflict
   validate :room_available
+  validate :patient_available
 
   private
 
@@ -32,5 +33,17 @@ class Appointment < ApplicationRecord
     return unless conflicts.exists?
 
     errors.add(:base, 'Sala já está ocupada neste horário.')
+  end
+
+  def patient_available
+    return unless patient && start_time && duration
+
+    end_time = start_time + duration.minutes
+    conflicts = Appointment.where(patient_id: patient_id)
+                           .where.not(id: id)
+                           .where("(start_time, (start_time + (duration * interval '1 minute'))) OVERLAPS (?, ?)", start_time, end_time)
+    return unless conflicts.exists?
+
+    errors.add(:base, 'O paciente já possui um agendamento neste horário.')
   end
 end

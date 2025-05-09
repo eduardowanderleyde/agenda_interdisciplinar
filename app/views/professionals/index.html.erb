@@ -1,21 +1,41 @@
 <p style="color: green"><%= notice %></p>
 
-<div class="max-w-6xl mx-auto py-8">
-  <div class="flex justify-between items-center mb-6">
+<style>
+  .tabela-profissionais {
+    width: 100%;
+    table-layout: auto;
+    word-break: break-word;
+  }
+  .tabela-profissionais th, .tabela-profissionais td {
+    white-space: normal !important;
+    word-break: break-word;
+    padding: 16px 12px;
+    font-size: 1.05em;
+  }
+  @media (max-width: 900px) {
+    .tabela-profissionais th, .tabela-profissionais td {
+      font-size: 0.95em;
+      padding: 8px 4px;
+    }
+  }
+</style>
+
+<div class="max-w-full px-8 py-10">
+  <div class="flex justify-between items-center mb-8">
     <h1 class="text-4xl font-bold text-gray-900 text-center">Profissionais</h1>
     <%= link_to "Novo Profissional", new_professional_path, class: "btn btn-primary bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 transition" %>
   </div>
-  <div class="bg-white rounded-xl shadow overflow-x-auto">
-    <table class="min-w-full divide-y divide-gray-200">
+  <div class="bg-white rounded-xl shadow">
+    <table class="tabela-profissionais min-w-full divide-y divide-gray-200">
       <thead class="bg-gray-50">
         <tr>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dias Disponíveis</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horários Disponíveis</th>
-          <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+          <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+          <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dias Disponíveis</th>
+          <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horários Disponíveis</th>
+          <th class="text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
         </tr>
       </thead>
-      <tbody class="bg-white divide-y divide-gray-100">
+      <tbody class="bg-white divide-y divide-gray-200">
         <% dias_semana = {
           'monday' => 'Segunda-feira', 'mon' => 'Segunda-feira', 'segunda' => 'Segunda-feira', 's' => 'Segunda-feira',
           'tuesday' => 'Terça-feira', 'tue' => 'Terça-feira', 'terça' => 'Terça-feira', 'n' => 'Terça-feira',
@@ -27,12 +47,12 @@
         } %>
         <% @professionals.each do |professional| %>
           <tr>
-            <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-800"><%= professional.name %></td>
-            <td class="px-6 py-4 whitespace-nowrap text-gray-700">
+            <td class="font-semibold text-gray-800"><%= professional.name %></td>
+            <td class="text-gray-700">
               <% dias = (professional.available_days || []).map { |d| dias_semana[d.to_s.strip.downcase] || d }.uniq.join(', ') %>
               <%= dias.presence || '-' %>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-gray-700">
+            <td class="text-gray-700">
               <% dias_semana_lista = [
                 ['monday', 'Segunda'],
                 ['tuesday', 'Terça'],
@@ -47,7 +67,7 @@
               end.compact.join(' | ') %>
               <%= horarios.presence || '-' %>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-center bg-gray-50">
+            <td class="text-center bg-gray-50">
               <div class="flex justify-center gap-2">
                 <%= link_to 'Editar', edit_professional_path(professional), class: 'btn btn-sm btn-secondary bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition font-bold shadow' %>
                 <%= button_to 'Excluir', professional_path(professional), method: :delete, data: { confirm: 'Tem certeza?' }, class: 'btn btn-sm btn-danger bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition font-bold shadow' %>
@@ -57,5 +77,8 @@
         <% end %>
       </tbody>
     </table>
+    <div class="mt-4">
+      <%= pagy_nav(@pagy) %>
+    </div>
   </div>
 </div>

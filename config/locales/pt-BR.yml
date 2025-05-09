@@ -30,4 +30,64 @@ pt-BR:
     formats:
       default: "%d/%m/%Y %H:%M"
       short: "%d/%m %H:%M"
-      long: "%d de %B de %Y, %H:%M" 
+      long: "%d de %B de %Y, %H:%M"
+  activerecord:
+    models:
+      patient: Paciente
+      professional: Profissional
+    attributes:
+      patient:
+        name: Nome
+        birthdate: "Data de Nascimento"
+        diagnosis: Diagnóstico
+        responsible: Responsável
+        specialties: "Especialidades Necessárias"
+        observations: Observações
+      professional:
+        name: Nome
+        available_days: "Dias Disponíveis"
+        available_hours: "Horários Disponíveis"
+        specialties: Especialidades
+        default_session_duration: "Duração padrão da sessão"
+  errors:
+    format: "%{attribute} %{message}"
+    messages:
+      blank: "não pode ficar em branco"
+      invalid: "não é válido"
+      taken: "já está em uso"
+      too_short: "é muito curto (mínimo %{count} caracteres)"
+      too_long: "é muito longo (máximo %{count} caracteres)"
+      confirmation: "não coincide com a confirmação"
+      not_a_number: "não é um número"
+      greater_than: "deve ser maior que %{count}"
+      less_than: "deve ser menor que %{count}"
+      greater_than_or_equal_to: "deve ser maior ou igual a %{count}"
+      less_than_or_equal_to: "deve ser menor ou igual a %{count}"
+      invalid_date: "não é uma data válida"
+      invalid_time: "não é um horário válido"
+      record_invalid: "A validação falhou: %{errors}"
+  activerecord:
+    errors:
+      models:
+        patient:
+          attributes:
+            name:
+              blank: "não pode ficar em branco"
+            birthdate:
+              blank: "não pode ficar em branco"
+            diagnosis:
+              blank: "não pode ficar em branco"
+            responsible:
+              blank: "não pode ficar em branco"
+        professional:
+          attributes:
+            name:
+              blank: "não pode ficar em branco"
+            available_days:
+              blank: "não pode ficar em branco"
+            available_hours:
+              blank: "não pode ficar em branco"
+        appointment:
+          attributes:
+            specialty:
+              required: "é obrigatório" 

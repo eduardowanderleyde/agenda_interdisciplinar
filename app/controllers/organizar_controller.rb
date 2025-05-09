@@ -1,51 +1,84 @@
 class OrganizarController < ApplicationController
   def index
-    @professionals = Professional.all
+    # Se não houver data selecionada, use a segunda-feira da semana atual
+    params[:start_date] ||= Date.today.beginning_of_week(:monday).to_s
+    week_start = Date.parse(params[:start_date])
+    week_end = week_start + 6.days
+
+    # Buscar todos os dados necessários em uma única consulta
     @rooms = Room.all
+    @appointments = Appointment
+                    .where(start_time: week_start.beginning_of_day..week_end.end_of_day)
+                    .includes(:patient, :professional, :specialty, :room)
+                    .order(:room_id, :start_time)
+
+    @professionals = Professional.all
     @patients = Patient.all
 
     if params[:professional_id].present? && params[:start_date].present?
       @profissional = Professional.find(params[:professional_id])
-      week_start = Date.parse(params[:start_date])
-      week_end = week_start + 6.days
       horarios = (8..17).flat_map { |h| ['%02d:00' % h, '%02d:30' % h] } + ['18:00']
       @horarios_livres_profissional = {}
+      # Monta hash de ocupação em memória
+      prof_busy = Hash.new { |h, k| h[k] = [] }
+      room_busy = Hash.new { |h, k| h[k] = [] }
+      @appointments.each do |appt|
+        if appt.professional_id
+          prof_busy[appt.professional_id] << (appt.start_time...(appt.start_time + appt.duration.minutes))
+        end
+        room_busy[appt.room_id] << (appt.start_time...(appt.start_time + appt.duration.minutes)) if appt.room_id
+      end
       (week_start..week_end).each do |dia|
         horarios.each do |hora|
           inicio = Time.zone.parse("#{dia} #{hora}")
           fim = inicio + 30.minutes
-          conflito = Appointment.where(professional: @profissional)
-                                .where("start_time < ? AND (start_time + interval '1 minute' * duration) > ?", fim, inicio).exists?
-          next if conflito
+          # Verifica se o profissional está ocupado
+          next if prof_busy[@profissional.id].any? { |range| range.overlaps?(inicio...fim) }
 
-          salas_livres = Room.all.select do |sala|
-            !Appointment.where(room: sala)
-                        .where("start_time < ? AND (start_time + interval '1 minute' * duration) > ?", fim, inicio).exists?
+          # Salas livres
+          salas_livres = @rooms.select do |sala|
+            room_busy[sala.id].none? do |range|
+              range.overlaps?(inicio...fim)
+            end
           end.map(&:name)
           @horarios_livres_profissional["#{I18n.l(dia, format: '%A')} #{hora}"] = salas_livres if salas_livres.any?
         end
       end
     elsif params[:patient_id].present? && params[:start_date].present?
       @paciente = Patient.find(params[:patient_id])
-      week_start = Date.parse(params[:start_date])
-      week_end = week_start + 6.days
       horarios = (8..17).flat_map { |h| ['%02d:00' % h, '%02d:30' % h] } + ['18:00']
       @horarios_livres_paciente = {}
+      # Monta hash de ocupação em memória
+      patient_busy = Hash.new { |h, k| h[k] = [] }
+      prof_busy = Hash.new { |h, k| h[k] = [] }
+      room_busy = Hash.new { |h, k| h[k] = [] }
+      @appointments.each do |appt|
+        if appt.patient_id
+          patient_busy[appt.patient_id] << (appt.start_time...(appt.start_time + appt.duration.minutes))
+        end
+        if appt.professional_id
+          prof_busy[appt.professional_id] << (appt.start_time...(appt.start_time + appt.duration.minutes))
+        end
+        room_busy[appt.room_id] << (appt.start_time...(appt.start_time + appt.duration.minutes)) if appt.room_id
+      end
       (week_start..week_end).each do |dia|
         horarios.each do |hora|
           inicio = Time.zone.parse("#{dia} #{hora}")
           fim = inicio + 30.minutes
-          conflito = Appointment.where(patient: @paciente)
-                                .where("start_time < ? AND (start_time + interval '1 minute' * duration) > ?", fim, inicio).exists?
-          next if conflito
+          # Verifica se o paciente está ocupado
+          next if patient_busy[@paciente.id].any? { |range| range.overlaps?(inicio...fim) }
 
-          profissionais_livres = Professional.all.select do |prof|
-            !Appointment.where(professional: prof)
-                        .where("start_time < ? AND (start_time + interval '1 minute' * duration) > ?", fim, inicio).exists?
+          # Profissionais livres
+          profissionais_livres = @professionals.select do |prof|
+            prof_busy[prof.id].none? do |range|
+              range.overlaps?(inicio...fim)
+            end
           end.map(&:name)
-          salas_livres = Room.all.select do |sala|
-            !Appointment.where(room: sala)
-                        .where("start_time < ? AND (start_time + interval '1 minute' * duration) > ?", fim, inicio).exists?
+          # Salas livres
+          salas_livres = @rooms.select do |sala|
+            room_busy[sala.id].none? do |range|
+              range.overlaps?(inicio...fim)
+            end
           end.map(&:name)
           if profissionais_livres.any? && salas_livres.any?
             @horarios_livres_paciente["#{I18n.l(dia, format: '%A')} #{hora}"] =
@@ -60,25 +93,23 @@ class OrganizarController < ApplicationController
         rooms: params[:rooms],
         session_duration: params[:session_duration]
       }
-      result = `python3 script/organizador.py '#{filtros.to_json}'`
-      @agendas = JSON.parse(result)
+      @agendas = AgendaOrganizerService.new(filtros).suggest_agendas
     else
       @agendas = []
     end
 
-    # --- NOVO BLOCO: Popula agendamentos reais para o planner semanal ---
+    # --- NOVO BLOCO OTIMIZADO: Popula agendamentos reais para o planner semanal ---
     return unless params[:start_date].present?
 
-    dias = (0..6).map { |i| Date.parse(params[:start_date]) + i.days }
+    week_start = Date.parse(params[:start_date])
+    week_end = week_start + 6.days
+    dias = (week_start..week_end).to_a
     @agendamentos_por_sala_e_dia = {}
 
     Room.all.each do |sala|
       @agendamentos_por_sala_e_dia[sala.id] = {}
       dias.each do |dia|
-        ags = Appointment.where(room: sala)
-                         .where(start_time: dia.beginning_of_day..dia.end_of_day)
-                         .includes(:patient, :professional, :specialty)
-                         .order(:start_time)
+        ags = @appointments.select { |ag| ag.room_id == sala.id && ag.start_time.to_date == dia }
         @agendamentos_por_sala_e_dia[sala.id][dia] = ags.map do |ag|
           {
             dia_semana: I18n.l(ag.start_time, format: '%A'),
@@ -90,8 +121,7 @@ class OrganizarController < ApplicationController
         end
       end
     end
-
-    # --- FIM DO NOVO BLOCO ---
+    # --- FIM DO NOVO BLOCO OTIMIZADO ---
   end
 
   def escolher

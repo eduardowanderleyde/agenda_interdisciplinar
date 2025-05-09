@@ -1,4 +1,13 @@
 <div class="max-w-4xl mx-auto bg-white rounded-lg shadow p-16 space-y-12">
+  <% if @professional.errors.any? %>
+    <div class="mb-4 p-4 bg-red-100 text-red-800 rounded">
+      <ul class="list-disc pl-5">
+        <% @professional.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
   <%= simple_form_for(@professional) do |f| %>
     <%= f.error_notification %>
     <%= f.error_notification message: f.object.errors[:base].to_sentence if f.object.errors[:base].present? %>
@@ -41,10 +50,25 @@
                 <button type="button" id="btn-adicionar-<%= dia_key %>" class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition text-xs font-semibold shadow ml-2">Adicionar horário (JS)</button>
               </div>
               <ul id="lista-horarios-<%= dia_key %>" class="mt-2">
-                <% (@professional.available_hours[dia_key] || []).each do |intervalo| %>
-                  <li>
-                    <%= intervalo %>
+                <% ah = @professional.available_hours
+                   if ah.is_a?(String)
+                     begin
+                       ah = JSON.parse(ah) rescue {}
+                     rescue
+                       ah = {}
+                     end
+                   end
+                   if ah.is_a?(Array)
+                     ah = { "all_days" => ah }
+                   end
+                   ah = {} unless ah.is_a?(Hash)
+                   lista = Array(ah[dia_key])
+                %>
+                <% lista.each do |intervalo| %>
+                  <li style="display: flex; align-items: center; gap: 8px;">
+                    <span><%= intervalo %></span>
                     <input type="hidden" name="professional[available_hours][<%= dia_key %>][]" value="<%= intervalo %>">
+                    <button type="button" onclick="this.parentElement.remove()" style="color: #dc2626; background: none; border: none; font-size: 1.2em; cursor: pointer;">&times;</button>
                   </li>
                 <% end %>
               </ul>

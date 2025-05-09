@@ -5,20 +5,26 @@ class AppointmentsController < ApplicationController
   # GET /appointments or /appointments.json
   def index
     @appointment = Appointment.new
-    @appointments = Appointment.includes(:patient, :professional, :room).all
-    @appointments = @appointments.where(professional_id: params[:professional_id]) if params[:professional_id].present?
-    @appointments = @appointments.where(patient_id: params[:patient_id]) if params[:patient_id].present?
-    @appointments = @appointments.where(room_id: params[:room_id]) if params[:room_id].present?
-    return unless params[:date].present?
-
-    date = begin
-      Date.parse(params[:date])
-    rescue StandardError
-      nil
-    end
-    return unless date
-
-    @appointments = @appointments.where(start_time: date.beginning_of_day..date.end_of_day)
+    @pagy, @appointments = pagy(
+      Appointment.includes(:patient, :professional, :room)
+                 .where(nil)
+                 .yield_self { |scope| params[:professional_id].present? ? scope.where(professional_id: params[:professional_id]) : scope }
+                 .yield_self { |scope| params[:patient_id].present? ? scope.where(patient_id: params[:patient_id]) : scope }
+                 .yield_self { |scope| params[:room_id].present? ? scope.where(room_id: params[:room_id]) : scope }
+                 .yield_self do |scope|
+                   if params[:date].present?
+                     date = begin
+                       Date.parse(params[:date])
+                     rescue StandardError
+                       nil
+                     end
+                     date ? scope.where(start_time: date.beginning_of_day..date.end_of_day) : scope
+                   else
+                     scope
+                   end
+                 end
+                 .order(start_time: :desc)
+    )
   end
 
   # GET /appointments/1 or /appointments/1.json

@@ -62,6 +62,9 @@
               <%= render appointment %>
             </div>
           <% end %>
+          <div class="col-span-full mt-4">
+            <%= pagy_nav(@pagy) %>
+          </div>
         <% else %>
           <div class="col-span-full flex flex-col items-center justify-center py-16">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-indigo-200 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
