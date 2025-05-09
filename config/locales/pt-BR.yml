@@ -2,30 +2,13 @@ pt-BR:
   date:
     formats:
       default: "%d/%m/%Y"
-      short: "%d/%m"
+      short: "%d de %b"
       long: "%d de %B de %Y"
     order: [ "day", "month", "year" ]
     month_names: [~, "janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
     abbr_month_names: [~, "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
     day_names: ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"]
     abbr_day_names: ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"]
-    # Traduções explícitas para dias em inglês
-    day_names:
-      sunday: "Domingo"
-      monday: "Segunda-feira"
-      tuesday: "Terça-feira"
-      wednesday: "Quarta-feira"
-      thursday: "Quinta-feira"
-      friday: "Sexta-feira"
-      saturday: "Sábado"
-    abbr_day_names:
-      sunday: "Dom"
-      monday: "Seg"
-      tuesday: "Ter"
-      wednesday: "Qua"
-      thursday: "Qui"
-      friday: "Sex"
-      saturday: "Sáb"
   time:
     formats:
       default: "%d/%m/%Y %H:%M"
@@ -91,3 +74,13 @@ pt-BR:
           attributes:
             specialty:
               required: "é obrigatório" 
+
+  devise:
+    failure:
+      unauthenticated: "Você precisa entrar ou se registrar antes de continuar."
+      invalid: "Email ou senha inválidos."
+      locked: "Sua conta está bloqueada."
+      not_found_in_database: "Email ou senha inválidos."
+      already_authenticated: "Você já está logado."
+    sessions:
+      signed_in: "Login realizado com sucesso."

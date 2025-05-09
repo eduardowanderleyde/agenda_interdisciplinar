@@ -63,7 +63,7 @@
             </div>
           <% end %>
           <div class="col-span-full mt-4">
-            <%= pagy_nav(@pagy) %>
+            <%= pagy_nav(@pagy, link_extra: 'class="px-3 py-1 border rounded text-sm text-indigo-700"') %>
           </div>
         <% else %>
           <div class="col-span-full flex flex-col items-center justify-center py-16">

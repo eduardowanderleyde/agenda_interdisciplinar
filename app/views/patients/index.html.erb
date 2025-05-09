@@ -1,4 +1,7 @@
-<p style="color: green"><%= notice %></p>
+<% if notice.present? %>
+  <p class="text-green-700 bg-green-100 px-4 py-2 rounded mb-4"><%= notice %></p>
+<% end %>
+
 
 <div class="max-w-5xl mx-auto py-8">
   <div class="flex items-center justify-between mb-8">
@@ -30,6 +33,6 @@
     </table>
   </div>
   <div class="mt-4">
-    <%= pagy_nav(@pagy) %>
+      <%= pagy_bootstrap_nav(@pagy) %>
   </div>
 </div>

@@ -1,7 +1,7 @@
 class OrganizarController < ApplicationController
   def index
-    # Se não houver data selecionada, use a segunda-feira da semana atual
-    params[:start_date] ||= Date.today.beginning_of_week(:monday).to_s
+    # Se não houver data selecionada, use o dia atual
+    params[:start_date] ||= Date.current.to_s
     week_start = Date.parse(params[:start_date])
     week_end = week_start + 6.days
 

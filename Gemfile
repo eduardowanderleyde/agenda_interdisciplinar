@@ -60,8 +60,7 @@ gem 'sidekiq'
 
 # Utilitários
 gem 'annotate'
-gem 'faker'
-gem 'pagy'
+gem 'pagy', '>= 5.10'
 
 # Processamento de Imagens
 gem 'image_processing'
@@ -101,3 +100,5 @@ group :test do
   gem 'capybara'
   gem 'selenium-webdriver'
 end
+
+gem 'webpacker', '~> 5.4'
