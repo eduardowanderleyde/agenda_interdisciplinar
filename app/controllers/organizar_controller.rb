@@ -68,11 +68,43 @@ class OrganizarController < ApplicationController
           # Verifica se o paciente está ocupado
           next if patient_busy[@paciente.id].any? { |range| range.overlaps?(inicio...fim) }
 
-          # Profissionais livres
+          # Profissionais livres (ajustado para considerar especialidade, dia e horário)
           profissionais_livres = @professionals.select do |prof|
-            prof_busy[prof.id].none? do |range|
-              range.overlaps?(inicio...fim)
+            # 1. Está livre nesse horário
+            livre = prof_busy[prof.id].none? { |range| range.overlaps?(inicio...fim) }
+            # 2. Tem a especialidade desejada
+            tem_especialidade = params[:especialidade_id].present? ? prof.specialty_ids.include?(params[:especialidade_id].to_i) : true
+            # 3. Atende nesse dia (ajustado para aceitar português e inglês)
+            dias_map = {
+              'monday' => %w[monday segunda segunda-feira],
+              'tuesday' => %W[tuesday ter\u00E7a ter\u00E7a-feira],
+              'wednesday' => %w[wednesday quarta quarta-feira],
+              'thursday' => %w[thursday quinta quinta-feira],
+              'friday' => %w[friday sexta sexta-feira],
+              'saturday' => %W[saturday s\u00E1bado sabado],
+              'sunday' => %w[sunday domingo]
+            }
+            dia_semana_en = dia.strftime('%A').downcase # ex: 'monday'
+            dia_semana_pt = I18n.l(dia, format: '%A').downcase # ex: 'segunda-feira'
+            dias_equivalentes = dias_map[dia_semana_en] || [dia_semana_en, dia_semana_pt]
+            atende_dia = (prof.available_days & dias_equivalentes).any?
+            # 4. Tem horário disponível nesse intervalo (ajustado para buscar em todos os equivalentes)
+            horarios = dias_equivalentes.flat_map { |d| Array(prof.available_hours[d]) }
+            dentro_do_intervalo = horarios.any? do |intervalo|
+              ini_str, fim_str = intervalo.split(' - ')
+              ini = begin
+                Time.zone.parse("#{dia} #{ini_str}")
+              rescue StandardError
+                nil
+              end
+              fim = begin
+                Time.zone.parse("#{dia} #{fim_str}")
+              rescue StandardError
+                nil
+              end
+              ini && fim && inicio >= ini && (inicio + 30.minutes) <= fim
             end
+            livre && tem_especialidade && atende_dia && dentro_do_intervalo
           end.map(&:name)
           # Salas livres
           salas_livres = @rooms.select do |sala|

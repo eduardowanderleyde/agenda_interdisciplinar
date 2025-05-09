@@ -76,7 +76,9 @@ module.exports = function(api) {
         {
           async: false
         }
-      ]
+      ],
+      '@babel/plugin-proposal-optional-chaining',
+      '@babel/plugin-transform-logical-assignment-operators'
     ].filter(Boolean)
   }
 }
