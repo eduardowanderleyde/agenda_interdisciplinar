@@ -1,3 +1,5 @@
-import "../application"
+import Rails from "@rails/ujs"
+Rails.start()
 
-console.log("Webpacker funcionando!") 
+import "../application"
+// console.log("Webpacker funcionando!") 

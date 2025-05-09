@@ -59,51 +59,62 @@ class ProfessionalsController < ApplicationController
   end
 
   def schedule
-    @week_days = (Date.today.beginning_of_week..Date.today.end_of_week).to_a
-    @appointments = @professional.appointments.where(start_time: @week_days.first.beginning_of_day..@week_days.last.end_of_day)
+    # Se vier o parâmetro week, usa ele como referência; senão, usa a semana atual
+    ref_date = params[:week].present? ? Date.parse(params[:week]) : Date.today
+    week_start = ref_date.beginning_of_week
+    week_end = ref_date.end_of_week
+    @week_days = (week_start..week_end).to_a
+    @appointments = @professional.appointments.where(start_time: week_start.beginning_of_day..week_end.end_of_day)
+    @prev_week = (week_start - 7.days).strftime('%Y-%m-%d')
+    @next_week = (week_start + 7.days).strftime('%Y-%m-%d')
   end
 
   def available_times
-    date = Date.parse(params[:date])
-    duration = params[:duration].to_i
-
-    # Horários disponíveis do profissional
-    available_hours = @professional.available_hours
-    day_of_week = date.strftime('%A').downcase
-    return render json: { times: [] } unless @professional.available_days.include?(day_of_week)
-
-    # Horários já agendados
-    booked_times = Appointment.where(professional: @professional)
-                              .where('DATE(start_time) = ?', date)
-                              .pluck(:start_time, :duration)
-                              .map { |start, dur| (start..start + dur.minutes) }
-
-    # Salas disponíveis
-    available_rooms = Room.where(active: true)
-    booked_rooms = Appointment.where(room: available_rooms)
-                              .where('DATE(start_time) = ?', date)
-                              .pluck(:start_time, :duration, :room_id)
-                              .map { |start, dur, room_id| [start..start + dur.minutes, room_id] }
-
-    # Filtrar horários disponíveis
-    available_times = []
-    available_hours.each do |hour|
-      start_time = Time.zone.parse("#{date} #{hour}")
-      end_time = start_time + duration.minutes
-
-      # Verificar se o profissional está disponível
-      next if booked_times.any? { |range| range.overlaps?(start_time..end_time) }
-
-      # Verificar se há sala disponível
-      room_available = available_rooms.any? do |room|
-        room_bookings = booked_rooms.select { |_, room_id| room_id == room.id }
-        room_bookings.none? { |range, _| range.overlaps?(start_time..end_time) }
-      end
-
-      available_times << hour if room_available
+    unless params[:date].present?
+      return render json: { times: [], error: "Parâmetro obrigatório 'date' ausente" }, status: :ok
+    end
+    unless params[:duration].present?
+      return render json: { times: [], error: "Parâmetro obrigatório 'duration' ausente" }, status: :ok
     end
 
-    render json: { times: available_times }
+    begin
+      date = Date.parse(params[:date])
+      duration = params[:duration].to_i
+      available_hours = @professional.available_hours
+      day_of_week = date.strftime('%A').downcase
+      return render json: { times: [] } unless @professional.available_days.include?(day_of_week)
+
+      booked_times = Appointment.where(professional: @professional)
+                                .where('DATE(start_time) = ?', date)
+                                .pluck(:start_time, :duration)
+                                .map { |start, dur| (start..start + dur.minutes) }
+
+      available_rooms = Room.where(active: true)
+      booked_rooms = Appointment.where(room: available_rooms)
+                                .where('DATE(start_time) = ?', date)
+                                .pluck(:start_time, :duration, :room_id)
+                                .map { |start, dur, room_id| [start..start + dur.minutes, room_id] }
+
+      available_times = []
+      available_hours.each do |hour|
+        start_time = Time.zone.parse("#{date} #{hour}")
+        end_time = start_time + duration.minutes
+
+        next if booked_times.any? { |range| range.overlaps?(start_time..end_time) }
+
+        room_available = available_rooms.any? do |room|
+          room_bookings = booked_rooms.select { |_, room_id| room_id == room.id }
+          room_bookings.none? { |range, _| range.overlaps?(start_time..end_time) }
+        end
+
+        available_times << hour if room_available
+      end
+
+      render json: { times: available_times }
+    rescue StandardError => e
+      Rails.logger.error("Erro em available_times: #{e.message}\n#{e.backtrace.join("\n")}")
+      render json: { times: [], error: e.message }, status: :ok
+    end
   end
 
   private

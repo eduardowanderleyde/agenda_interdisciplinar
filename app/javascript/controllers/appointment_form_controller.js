@@ -15,7 +15,10 @@ export default class extends Controller {
     if (!professional || !date || !duration) return
 
     fetch(`/professionals/${professional}/available_times?date=${date}&duration=${duration}`)
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) throw new Error("Erro na resposta do servidor");
+        return response.json();
+      })
       .then(data => {
         this.timeTarget.innerHTML = '<option value="">Selecione</option>'
         data.times.forEach(time => {
@@ -25,5 +28,9 @@ export default class extends Controller {
           this.timeTarget.appendChild(option)
         })
       })
+      .catch(error => {
+        console.error("Erro ao buscar horários disponíveis:", error);
+        this.timeTarget.innerHTML = '<option value="">Erro ao carregar horários</option>';
+      });
   }
 } 

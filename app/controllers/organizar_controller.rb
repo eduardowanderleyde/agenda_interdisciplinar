@@ -1,6 +1,10 @@
 class OrganizarController < ApplicationController
   def index
     # Se não houver data selecionada, use o dia atual
+    # Permite que paciente_sem_agendamento funcione como patient_id
+    params[:patient_id] ||= params[:paciente_sem_agendamento]
+
+    # Se não houver data selecionada, use o dia atual
     params[:start_date] ||= Date.current.to_s
     week_start = Date.parse(params[:start_date])
     week_end = week_start + 6.days
@@ -46,6 +50,7 @@ class OrganizarController < ApplicationController
       end
     elsif params[:patient_id].present? && params[:start_date].present?
       @paciente = Patient.find(params[:patient_id])
+      @paciente = Patient.find(params[:patient_id] || params[:paciente_sem_agendamento])
       horarios = (8..17).flat_map { |h| ['%02d:00' % h, '%02d:30' % h] } + ['18:00']
       @horarios_livres_paciente = {}
       # Monta hash de ocupação em memória
@@ -90,6 +95,7 @@ class OrganizarController < ApplicationController
             atende_dia = (prof.available_days & dias_equivalentes).any?
             # 4. Tem horário disponível nesse intervalo (ajustado para buscar em todos os equivalentes)
             horarios = dias_equivalentes.flat_map { |d| Array(prof.available_hours[d]) }
+            duration = params[:duration].presence || prof.default_session_duration || 30
             dentro_do_intervalo = horarios.any? do |intervalo|
               ini_str, fim_str = intervalo.split(' - ')
               ini = begin
@@ -102,8 +108,20 @@ class OrganizarController < ApplicationController
               rescue StandardError
                 nil
               end
-              ini && fim && inicio >= ini && (inicio + 30.minutes) <= fim
+              # Verifica se o horário desejado está dentro do intervalo disponível
+              # e se há tempo suficiente para a duração do slot
+              ini && fim &&
+                inicio >= ini &&
+                (inicio + duration.to_i.minutes) <= fim
             end
+            # LOG
+            Rails.logger.info "\n---\nProfissional: #{prof.name}"
+            Rails.logger.info "Dias equivalentes: #{dias_equivalentes.inspect}"
+            Rails.logger.info "available_days: #{prof.available_days.inspect}"
+            Rails.logger.info "Horários disponíveis: #{horarios.inspect}"
+            Rails.logger.info "Horário desejado: #{inicio.strftime('%H:%M')}"
+            Rails.logger.info "Duração do slot: #{duration} minutos"
+            Rails.logger.info "Livre: #{livre}, Tem especialidade: #{tem_especialidade}, Atende dia: #{atende_dia}, Dentro do intervalo: #{dentro_do_intervalo}"
             livre && tem_especialidade && atende_dia && dentro_do_intervalo
           end.map(&:name)
           # Salas livres

@@ -4,7 +4,7 @@ export default class extends Controller {
   static targets = ["inicio", "fim", "list", "item", "error"]
 
   connect() {
-    alert('Stimulus conectou!');
+    // alert('Stimulus conectou!');
     console.log('[horarios] Entrando no connect do controller!');
     this.form = this.element.closest('form')
     this.handleSubmitBound = this.handleSubmit.bind(this)

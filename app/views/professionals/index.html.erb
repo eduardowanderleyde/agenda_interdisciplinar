@@ -46,6 +46,7 @@
           'sunday' => 'Domingo', 'sun' => 'Domingo', 'domingo' => 'Domingo', 'd' => 'Domingo'
         } %>
         <% @professionals.each do |professional| %>
+          <% cache(professional) do %>
           <tr>
             <td class="font-semibold text-gray-800"><%= professional.name %></td>
             <td class="text-gray-700">
@@ -74,11 +75,12 @@
               </div>
             </td>
           </tr>
+          <% end %>
         <% end %>
       </tbody>
     </table>
     <div class="mt-4">
-      <%= raw(pagy_nav(@pagy, link_extra: 'class="px-3 py-1 border rounded text-sm text-indigo-700"')) %>
+      <%= raw(pagy_bootstrap_nav(@pagy)) %>
     </div>
   </div>
 </div>

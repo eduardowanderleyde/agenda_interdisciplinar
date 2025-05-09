@@ -2,6 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   close() {
-    this.element.innerHTML = ""
+    console.log("Fechando modal...");
+    this.element.remove();
   }
 } 

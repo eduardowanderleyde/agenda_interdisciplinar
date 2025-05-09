@@ -54,6 +54,7 @@
       <h2 class="text-lg font-semibold mb-4">Agendamentos</h2>
       <div class="space-y-4">
         <% @patient.appointments.includes(:professional, :room).order(start_time: :desc).each do |appointment| %>
+          <% cache(appointment) do %>
           <div class="bg-gray-50 rounded-lg p-4">
             <div class="flex justify-between items-start">
               <div>
@@ -69,6 +70,7 @@
               </span>
             </div>
           </div>
+          <% end %>
         <% end %>
       </div>
     </div>

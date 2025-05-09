@@ -29,6 +29,7 @@
       </div>
       <div class="mt-6" data-controller="horarios">
         <label class="block text-lg font-bold text-indigo-800 mb-4">Horários disponíveis por dia</label>
+        <p class="text-sm text-gray-600 mb-2">Preencha <b>início</b> e <b>fim</b> para adicionar um intervalo. Exemplo: <b>12:00</b> até <b>14:00</b></p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <% dias_semana = [
             ['monday', 'Segunda'],
@@ -44,12 +45,12 @@
                 <label class="font-bold text-indigo-700 text-base select-none cursor-pointer"><%= dia_label %></label>
               </div>
               <div class="grid grid-cols-[auto_auto_auto_auto] items-center gap-2 mb-2">
-                <input type="text" data-dia="<%= dia_key %>" maxlength="5" placeholder="Início (Ex: 16h ou 16:00)" class="border rounded p-2 w-24 text-sm js-inicio" autocomplete="off">
+                <input type="text" data-dia="<%= dia_key %>" maxlength="5" placeholder="Início (Ex: 12:00)" class="border rounded p-2 w-24 text-sm js-inicio" autocomplete="off" data-horarios-target="inicio">
                 <span class="font-bold">até</span>
-                <input type="text" data-dia="<%= dia_key %>" maxlength="5" placeholder="Fim (Ex: 18h ou 18:00)" class="border rounded p-2 w-24 text-sm js-fim" autocomplete="off">
-                <button type="button" id="btn-adicionar-<%= dia_key %>" class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition text-xs font-semibold shadow ml-2">Adicionar horário (JS)</button>
+                <input type="text" data-dia="<%= dia_key %>" maxlength="5" placeholder="Fim (Ex: 14:00)" class="border rounded p-2 w-24 text-sm js-fim" autocomplete="off" data-horarios-target="fim">
+                <button type="button" id="btn-adicionar-<%= dia_key %>" class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition text-xs font-semibold shadow ml-2" data-action="click->horarios#addIntervalo" data-dia="<%= dia_key %>">Adicionar horário (JS)</button>
               </div>
-              <ul id="lista-horarios-<%= dia_key %>" class="mt-2">
+              <ul id="lista-horarios-<%= dia_key %>" class="mt-2 flex flex-wrap gap-2" data-horarios-target="list" data-dia="<%= dia_key %>">
                 <% ah = @professional.available_hours
                    if ah.is_a?(String)
                      begin
@@ -65,43 +66,18 @@
                    lista = Array(ah[dia_key])
                 %>
                 <% lista.each do |intervalo| %>
-                  <li style="display: flex; align-items: center; gap: 8px;">
+                  <li class="flex items-center bg-green-100 text-green-900 rounded px-3 py-1 mb-1 font-semibold text-xs shadow-sm">
                     <span><%= intervalo %></span>
                     <input type="hidden" name="professional[available_hours][<%= dia_key %>][]" value="<%= intervalo %>">
-                    <button type="button" onclick="this.parentElement.remove()" style="color: #dc2626; background: none; border: none; font-size: 1.2em; cursor: pointer;">&times;</button>
+                    <button type="button" onclick="this.parentElement.remove()" class="ml-2 text-red-600 hover:text-red-800 font-bold text-lg bg-transparent border-none cursor-pointer">&times;</button>
                   </li>
                 <% end %>
               </ul>
-              <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                  var btn = document.getElementById('btn-adicionar-<%= dia_key %>');
-                  var lista = document.getElementById('lista-horarios-<%= dia_key %>');
-                  btn.onclick = function() {
-                    var inicio = document.querySelector('input.js-inicio[data-dia="<%= dia_key %>"]').value.trim();
-                    var fim = document.querySelector('input.js-fim[data-dia="<%= dia_key %>"]').value.trim();
-                    if (!inicio || !fim) {
-                      alert('Preencha início e fim!');
-                      return;
-                    }
-                    var texto = inicio + ' - ' + fim;
-                    var li = document.createElement('li');
-                    li.textContent = texto;
-                    var input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'professional[available_hours][<%= dia_key %>][]';
-                    input.value = texto;
-                    li.appendChild(input);
-                    lista.appendChild(li);
-                    document.querySelector('input.js-inicio[data-dia="<%= dia_key %>"]').value = '';
-                    document.querySelector('input.js-fim[data-dia="<%= dia_key %>"]').value = '';
-                  };
-                });
-              </script>
-              <div class="text-red-600 text-xs" style="display:none;"></div>
+              <div class="text-red-600 text-xs" style="display:none;" data-horarios-target="error" data-dia="<%= dia_key %>"></div>
             </div>
           <% end %>
         </div>
-        <small class="text-gray-500 block mt-2">Digite o horário de início e fim no formato 16h, 16:00, 18h, 18:00. O intervalo será salvo ao criar o profissional.</small>
+        <small class="text-gray-500 block mt-2">Digite o horário de início e fim no formato 12:00, 14:00. O intervalo será salvo ao criar o profissional.</small>
       </div>
       <div class="mt-6">
         <label class="block text-lg font-bold text-indigo-700 mb-3">Duração padrão da sessão</label>

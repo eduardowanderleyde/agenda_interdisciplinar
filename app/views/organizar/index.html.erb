@@ -119,8 +119,23 @@
           </div>
         <% end %>
       </div>
-    <% elsif params[:sugerir_agenda_semana].present? %>
-      <div class="text-red-600 text-sm mt-2">Nenhum profissional disponível para este horário/especialidade.</div>
+    <% elsif params[:sugerir_agenda_semana].present? && params[:horario_desejado].present? && @horarios_livres_paciente.present? %>
+      <% data, hora = params[:horario_desejado].split('|') %>
+      <% dia_semana = I18n.l(Date.parse(data), format: '%A', locale: :'pt-BR') %>
+      <% chave = "#{dia_semana} #{hora}" %>
+      <% profissionais = @horarios_livres_paciente[chave]&.dig(:profissionais) || [] %>
+      <% if profissionais.any? %>
+        <div class="bg-white rounded-xl shadow p-6 flex flex-col gap-4 max-w-2xl mx-auto mt-4 relative overflow-visible">
+          <label class="block font-semibold mb-1">Profissional sugerido</label>
+          <ul>
+            <% profissionais.each do |prof| %>
+              <li><%= prof %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% else %>
+        <div class="text-red-600 text-sm mt-2">Nenhum profissional disponível para este horário/especialidade.</div>
+      <% end %>
     <% end %>
   </div>
 </div>

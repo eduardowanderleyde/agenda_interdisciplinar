@@ -17,15 +17,15 @@
       <%= f.association :room, input_html: { class: "border rounded-lg p-2 w-full bg-white focus:ring-2 focus:ring-indigo-500" }, prompt: "Selecione a sala", label: false %>
     </div>
     <div>
-      <%= f.label :start_time, "Data do atendimento", class: "block font-semibold mb-2 text-indigo-900" %>
+      <%= f.label :start_time, "Data do atendimento", for: "appointment_start_time_3i", class: "block font-semibold mb-2 text-indigo-900" %>
       <div class="flex flex-wrap gap-2 items-end">
-        <%= select_tag 'appointment[start_time(3i)]', options_for_select((1..31).map { |d| [d, d] }, @appointment.start_time&.day), class: "border rounded-lg p-2 bg-white focus:ring-2 focus:ring-indigo-500" %>
-        <%= select_tag 'appointment[start_time(2i)]', options_for_select(I18n.t('date.month_names').compact.each_with_index.map { |m, i| [m, i+1] }, @appointment.start_time&.month), class: "border rounded-lg p-2 bg-white focus:ring-2 focus:ring-indigo-500" %>
-        <%= select_tag 'appointment[start_time(1i)]', options_for_select((Date.current.year..(Date.current.year+5)).to_a, @appointment.start_time&.year || Date.current.year), class: "border rounded-lg p-2 bg-white focus:ring-2 focus:ring-indigo-500" %>
+        <%= select_tag 'appointment[start_time(3i)]', options_for_select((1..31).map { |d| [d, d] }, @appointment.start_time&.day), class: "border rounded-lg p-2 bg-white focus:ring-2 focus:ring-indigo-500", id: "appointment_start_time_3i" %>
+        <%= select_tag 'appointment[start_time(2i)]', options_for_select(I18n.t('date.month_names').compact.each_with_index.map { |m, i| [m, i+1] }, @appointment.start_time&.month), class: "border rounded-lg p-2 bg-white focus:ring-2 focus:ring-indigo-500", id: "appointment_start_time_2i" %>
+        <%= select_tag 'appointment[start_time(1i)]', options_for_select((Date.current.year..(Date.current.year+5)).to_a, @appointment.start_time&.year || Date.current.year), class: "border rounded-lg p-2 bg-white focus:ring-2 focus:ring-indigo-500", id: "appointment_start_time_1i" %>
         <span class="mx-2 font-bold">—</span>
-        <%= select_tag 'appointment[start_time(4i)]', options_for_select((0..23).map { |h| ["%02d" % h, h] }, @appointment.start_time&.hour), class: "border rounded-lg p-2 bg-white focus:ring-2 focus:ring-indigo-500" %>
+        <%= select_tag 'appointment[start_time(4i)]', options_for_select((0..23).map { |h| ["%02d" % h, h] }, @appointment.start_time&.hour), class: "border rounded-lg p-2 bg-white focus:ring-2 focus:ring-indigo-500", id: "appointment_start_time_4i" %>
         <span class="font-bold">:</span>
-        <%= select_tag 'appointment[start_time(5i)]', options_for_select((0..59).map { |m| ["%02d" % m, m] }, @appointment.start_time&.min), class: "border rounded-lg p-2 bg-white focus:ring-2 focus:ring-indigo-500" %>
+        <%= select_tag 'appointment[start_time(5i)]', options_for_select((0..59).map { |m| ["%02d" % m, m] }, @appointment.start_time&.min), class: "border rounded-lg p-2 bg-white focus:ring-2 focus:ring-indigo-500", data: { appointment_form_target: "date" }, id: "appointment_start_time_5i" %>
       </div>
     </div>
     <div>
@@ -47,7 +47,7 @@
   </div>
 
   <div class="form-actions mt-8 text-center">
-    <%= f.button :submit, "Salvar", class: "bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 text-lg font-bold shadow transition" %>
+    <button type="submit" class="bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 text-lg font-bold shadow transition">Salvar</button>
   </div>
 <% end %>
 </div>

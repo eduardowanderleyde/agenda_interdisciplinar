@@ -1,3 +1,4 @@
+<% cache(appointment) do %>
 <div id="appointment_<%= appointment.id %>" class="mb-2 p-2 rounded-lg bg-indigo-50 border-l-4 border-indigo-400 shadow-sm text-xs">
   <div class="font-bold text-indigo-900 text-sm mb-0.5"><%= appointment.patient.name %></div>
   <div class="text-xs text-indigo-800 mb-0.5">Profissional: <%= appointment.professional.name %></div>
@@ -19,3 +20,4 @@
     <% end %>
   </div>
 </div>
+<% end %>
