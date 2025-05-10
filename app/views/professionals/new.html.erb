@@ -1,9 +1,9 @@
-<div style="background-color: #f9fafb; min-height: 100vh; padding-top: 40px; padding-bottom: 40px;">
-  <div class="max-w-xl mx-auto p-8 bg-white rounded shadow">
-    <h1 class="text-3xl font-bold mb-8 text-indigo-800 text-center">Tela para Adicionar Novo Profissional</h1>
+<div class="min-h-screen py-10 px-4 bg-gradient-to-br from-indigo-500 via-blue-600 to-purple-600">
+  <div class="max-w-3xl mx-auto bg-white/10 backdrop-blur-md border border-white/20 shadow-xl rounded-3xl p-10 text-white">
+    <h1 class="text-3xl font-bold mb-8 text-center">Tela para Adicionar Novo Profissional</h1>
     <%= render 'form', professional: @professional %>
     <div class="mt-8 text-center">
-      <%= link_to 'Voltar para a lista de profissionais', professionals_path, class: 'text-indigo-600 hover:underline text-lg' %>
+      <%= link_to 'Voltar para a lista de profissionais', professionals_path, class: 'text-indigo-200 hover:text-white font-semibold underline' %>
     </div>
   </div>
 </div>

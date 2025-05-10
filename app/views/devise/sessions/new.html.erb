@@ -2,7 +2,7 @@
 <div class="devise-login-bg">
   <div class="devise-login-card">
     <div class="devise-login-avatar">
-      <img src="https://www.svgrepo.com/show/382106/avatar-boy.svg" alt="Avatar" />
+      <%= image_tag 'profile.jpeg', alt: 'Avatar', class: 'w-20 h-20 rounded-full mx-auto shadow' %>
     </div>
     <h2 class="devise-login-title">Entrar na Clínica</h2>
     <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: { class: 'devise-login-form' }) do |f| %>

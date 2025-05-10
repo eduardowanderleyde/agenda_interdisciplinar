@@ -12,10 +12,10 @@
 
   </head>
 
-  <body class="bg-gray-100 min-h-screen">
+  <body class="<%= devise_controller? ? '' : 'bg-gradient-to-br from-indigo-500 via-blue-600 to-purple-600 min-h-screen text-white' %>">
+    <% unless devise_controller? %>
     <%= render NavigationComponent.new %>
-
-    <main class="container mx-auto px-4 py-8">
+      <main class="container mx-auto px-4 py-8">
     <% if notice %>
       <p class="text-green-700 bg-green-100 px-4 py-2 rounded mb-4 font-semibold shadow max-w-2xl mx-auto"> <%= sanitize(notice) %> </p>
     <% end %>
@@ -24,10 +24,13 @@
     <% end %>
 
     <%= turbo_frame_tag "modal" %>
-
-      <div class="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
+      <div class="max-w-4xl mx-auto bg-white/10 backdrop-blur-md rounded-3xl shadow-xl p-10 border border-white/20">
     <%= yield %>
       </div>
     </main>
+      <% else %>
+    <%= yield %>
+  <% end %>
+
   </body>
 </html>

@@ -15,3 +15,7 @@ application.register("modal", ModalController)
 
 import HorariosController from "./horarios_controller"
 application.register("horarios", HorariosController)
+
+
+import PlannerController from "./planner_controller"
+application.register("planner", PlannerController)

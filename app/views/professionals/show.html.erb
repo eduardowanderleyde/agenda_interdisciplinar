@@ -1,96 +1,94 @@
-<p style="color: green"><%= notice %></p>
+<p class="text-green-700 bg-green-100 text-sm px-4 py-2 rounded mb-6 w-fit mx-auto"><%= notice %></p>
 
 <div class="max-w-4xl mx-auto">
-  <div class="bg-white shadow rounded-lg p-6">
+  <div class="bg-white/20 backdrop-blur rounded-xl border border-white/20 shadow-lg p-8 text-white">
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold"><%= @professional.name %></h1>
-      <div class="flex gap-2">
-        <%= link_to "Editar", edit_professional_path(@professional), class: "btn btn-primary" %>
-        <%= button_to "Excluir", @professional, method: :delete, class: "btn btn-danger", data: { confirm: "Tem certeza?" } %>
+      <h1 class="text-3xl font-bold text-white"><%= @professional.name %></h1>
+      <div class="flex gap-3">
+        <%= link_to "Editar", edit_professional_path(@professional), class: "px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded shadow" %>
+        <%= button_to "Excluir", @professional, method: :delete, class: "px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded shadow", data: { confirm: "Tem certeza?" } %>
       </div>
     </div>
 
-    <div class="grid grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
-        <h2 class="text-lg font-semibold mb-4">Especialidades</h2>
-        <div class="space-y-2">
+        <h2 class="text-xl font-semibold mb-4 text-indigo-200">Especialidades</h2>
+        <div class="flex flex-wrap gap-2">
           <% @professional.specialties.each do |specialty| %>
-            <div class="flex items-center gap-2">
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                <%= specialty.name %>
-              </span>
-            </div>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 shadow-sm">
+              <%= specialty.name %>
+            </span>
           <% end %>
         </div>
       </div>
 
       <div>
-        <h2 class="text-lg font-semibold mb-4">Disponibilidade</h2>
-        <dl class="space-y-2">
-          <div>
-            <dt class="text-sm font-medium text-gray-500">Dias de Atendimento</dt>
-            <dd>
-              <% @professional.available_days.reject(&:blank?).each do |day| %>
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  <%= I18n.t("date.day_names.#{day}", default: day.humanize) %>
-                </span>
-              <% end %>
-            </dd>
-          </div>
-          <div>
-            <dt class="text-sm font-medium text-gray-500">Horários Disponíveis</dt>
-            <dd>
-              <% dias_semana = [
-                ['monday', 'Segunda'],
-                ['tuesday', 'Terça'],
-                ['wednesday', 'Quarta'],
-                ['thursday', 'Quinta'],
-                ['friday', 'Sexta']
-              ] %>
-              <% dias_semana.each do |dia_key, dia_label| %>
-                <% horarios = @professional.available_hours[dia_key] || [] %>
-                <% if horarios.any? %>
-                  <div class="mb-1">
-                    <span class="font-semibold text-gray-700"><%= dia_label %>:</span>
-                    <% horarios.each do |intervalo| %>
-                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 ml-1">
-                        <%= intervalo %>
-                      </span>
-                    <% end %>
-                  </div>
+        <h2 class="text-xl font-semibold mb-4 text-indigo-200">Disponibilidade</h2>
+        <div class="mb-2">
+          <p class="text-sm text-white font-semibold mb-1">Dias de Atendimento:</p>
+          <% @professional.available_days.reject(&:blank?).each do |day| %>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-200 text-green-800 shadow-sm mr-2 mb-1">
+              <%= I18n.t("date.day_names.#{day}", default: day.humanize) %>
+            </span>
+          <% end %>
+        </div>
+
+        <div class="mt-4">
+          <p class="text-sm text-white font-semibold mb-1">Horários Disponíveis:</p>
+          <% dias_semana = [
+            ['monday', 'Segunda'],
+            ['tuesday', 'Terça'],
+            ['wednesday', 'Quarta'],
+            ['thursday', 'Quinta'],
+            ['friday', 'Sexta']
+          ] %>
+          <% dias_semana.each do |dia_key, dia_label| %>
+            <% horarios = @professional.available_hours[dia_key] || [] %>
+            <% if horarios.any? %>
+              <div class="mb-1">
+                <span class="font-bold text-indigo-100"><%= dia_label %>:</span>
+                <% horarios.each do |intervalo| %>
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-200 text-yellow-900 shadow-sm ml-2">
+                    <%= intervalo %>
+                  </span>
                 <% end %>
-              <% end %>
-            </dd>
-          </div>
-        </dl>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
       </div>
     </div>
 
     <div class="mt-8">
-      <h2 class="text-lg font-semibold mb-4">Agenda</h2>
-      <%= link_to "Ver Agenda", schedule_professional_path(@professional), class: "btn btn-secondary" %>
+      <h2 class="text-xl font-semibold mb-4 text-indigo-200">Agenda</h2>
+      <%= link_to "Ver Agenda", schedule_professional_path(@professional), class: "px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white text-sm font-bold rounded shadow" %>
     </div>
 
-    <div class="mt-8">
-      <h2 class="text-lg font-semibold mb-4">Próximos Agendamentos</h2>
+    <div class="mt-10">
+      <h2 class="text-xl font-semibold mb-4 text-indigo-200">Próximos Agendamentos</h2>
       <div class="space-y-4">
         <% @professional.appointments.includes(:patient, :room).where("start_time >= ?", Time.current).order(start_time: :asc).limit(5).each do |appointment| %>
           <% cache(appointment) do %>
-          <div class="bg-gray-50 rounded-lg p-4">
-            <div class="flex justify-between items-start">
-              <div>
-                <h3 class="font-medium"><%= l(appointment.start_time, format: :long) %></h3>
-                <p class="text-sm text-gray-600">
-                  Paciente: <%= appointment.patient.name %><br>
-                  Sala: <%= appointment.room.name %><br>
-                  Duração: <%= appointment.duration %> minutos
-                </p>
+            <div class="bg-white/10 backdrop-blur-sm border border-white/10 rounded-lg p-4 shadow-sm text-sm">
+              <div class="flex justify-between items-center">
+                <div>
+                  <p class="text-indigo-100 font-semibold"><%= l(appointment.start_time, format: :long) %></p>
+                  <p class="text-white mt-1">
+                    Paciente: <%= appointment.patient.name %><br>
+                    Sala: <%= appointment.room.name %><br>
+                    Duração: <%= appointment.duration %> minutos
+                  </p>
+                </div>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                  <%= case appointment.status
+                      when 'realizado' then 'bg-green-200 text-green-800'
+                      when 'cancelado' then 'bg-red-200 text-red-800'
+                      else 'bg-yellow-200 text-yellow-900'
+                    end %> shadow">
+                  <%= appointment.status.titleize %>
+                </span>
               </div>
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= appointment.status == 'realizado' ? 'bg-green-100 text-green-800' : appointment.status == 'cancelado' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800' %>">
-                <%= appointment.status.titleize %>
-              </span>
             </div>
-          </div>
           <% end %>
         <% end %>
       </div>

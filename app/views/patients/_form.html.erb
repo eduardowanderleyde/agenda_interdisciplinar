@@ -1,5 +1,5 @@
-<div class="flex justify-center items-center min-h-[80vh] bg-gray-50">
-  <div class="w-full max-w-3xl bg-white rounded-2xl shadow-lg p-12 space-y-10">
+<div class="flex justify-center items-center min-h-[80vh] bg-gradient-to-br from-indigo-600 to-purple-600">
+  <div class="w-full max-w-3xl bg-white/10 backdrop-blur-lg text-white rounded-2xl shadow-xl p-12 space-y-10 border border-white/20">
     <% if @patient.errors.any? %>
       <div class="mb-6 p-4 bg-red-100 text-red-800 rounded-lg border border-red-300">
         <ul class="list-disc pl-5">
@@ -9,50 +9,58 @@
         </ul>
       </div>
     <% end %>
+
+    <h1 class="text-3xl font-bold text-center text-white">Cadastro de Pacientes</h1>
+
     <%= simple_form_for(@patient) do |f| %>
       <div class="space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <%= f.label :name, 'Nome', class: 'block font-semibold mb-1' %>
-            <%= f.input_field :name, class: 'form-input w-full rounded border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50', placeholder: 'Digite o nome completo' %>
+            <%= f.input_field :name, class: 'form-input w-full rounded bg-white/80 text-gray-900 placeholder-gray-500 focus:border-indigo-400 focus:ring focus:ring-indigo-300', placeholder: 'Digite o nome completo' %>
           </div>
           <div>
             <%= f.label :birthdate, 'Data de Nascimento', class: 'block font-semibold mb-1' %>
-            <%= f.input_field :birthdate, type: 'date', class: 'form-input w-full rounded border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50', placeholder: 'Selecione a data' %>
+            <%= f.input_field :birthdate, type: 'date', class: 'form-input w-full rounded bg-white/80 text-gray-900 placeholder-gray-500 focus:border-indigo-400 focus:ring focus:ring-indigo-300' %>
           </div>
         </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <%= f.label :diagnosis, 'Diagnóstico', class: 'block font-semibold mb-1' %>
-            <%= f.input_field :diagnosis, class: 'form-input w-full rounded border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50', placeholder: 'Ex: TEA, TDAH...' %>
+            <%= f.input_field :diagnosis, class: 'form-input w-full rounded bg-white/80 text-gray-900 placeholder-gray-500 focus:border-indigo-400 focus:ring focus:ring-indigo-300', placeholder: 'Ex: TEA, TDAH...' %>
           </div>
           <div>
             <%= f.label :responsible, 'Responsável', class: 'block font-semibold mb-1' %>
-            <%= f.input_field :responsible, class: 'form-input w-full rounded border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50', placeholder: 'Nome do responsável' %>
+            <%= f.input_field :responsible, class: 'form-input w-full rounded bg-white/80 text-gray-900 placeholder-gray-500 focus:border-indigo-400 focus:ring focus:ring-indigo-300', placeholder: 'Nome do responsável' %>
           </div>
         </div>
+
         <div>
-          <%= f.label :specialties, 'Especialidades Necessárias', class: 'block font-semibold mb-1' %>
+          <%= f.label :specialties, 'Especialidades Necessárias', class: 'block font-semibold mb-2' %>
           <div class="flex flex-wrap gap-4">
             <% Specialty.all.each do |specialty| %>
-              <label class="inline-flex items-center">
-                <%= check_box_tag 'patient[specialty_ids][]', specialty.id, @patient.specialty_ids.include?(specialty.id), class: 'form-checkbox text-indigo-600 rounded' %>
-                <span class="ml-2 text-sm"><%= specialty.name %></span>
+              <label class="flex items-center bg-white/20 text-white rounded-lg px-3 py-2 text-sm font-medium shadow-sm">
+                <%= check_box_tag 'patient[specialty_ids][]', specialty.id, @patient.specialty_ids.include?(specialty.id), class: 'form-checkbox h-4 w-4 text-indigo-500 bg-white rounded mr-2' %>
+                <%= specialty.name %>
               </label>
             <% end %>
           </div>
         </div>
+
         <div>
           <%= f.label :observations, 'Observações', class: 'block font-semibold mb-1' %>
-          <%= f.text_area :observations, class: 'form-textarea w-full rounded border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50', rows: 3, placeholder: 'Observações adicionais' %>
+          <%= f.text_area :observations, class: 'form-textarea w-full rounded bg-white/80 text-gray-900 placeholder-gray-500 focus:border-indigo-400 focus:ring focus:ring-indigo-300', rows: 3, placeholder: 'Observações adicionais' %>
         </div>
+
         <div class="form-actions mt-8 flex justify-center">
-          <%= f.button :submit, 'Salvar', class: 'btn btn-primary px-8 py-3 rounded-lg bg-indigo-600 text-white font-bold text-lg hover:bg-indigo-700 transition' %>
+          <%= f.button :submit, 'Salvar', class: 'px-8 py-3 rounded-lg bg-indigo-600 text-white font-bold text-lg hover:bg-indigo-700 transition' %>
         </div>
       </div>
     <% end %>
+
     <div class="mt-8 flex justify-center">
-      <%= link_to 'Voltar para pacientes', patients_path, class: 'text-indigo-700 font-semibold hover:underline' %>
+      <%= link_to 'Voltar para pacientes', patients_path, class: 'text-indigo-200 font-semibold hover:underline' %>
     </div>
   </div>
 </div>

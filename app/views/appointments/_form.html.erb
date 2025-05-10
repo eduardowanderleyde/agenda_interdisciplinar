@@ -1,53 +1,60 @@
-<div class="max-w-2xl mx-auto bg-white rounded-lg shadow p-8 space-y-8" style="background-color: #f9fafb;">
-<%= simple_form_for(@appointment, html: { data: { controller: "appointment-form" }, class: "space-y-6" }) do |f| %>
-  <%= f.error_notification %>
-  <%= f.error_notification message: f.object.errors[:base].to_sentence if f.object.errors[:base].present? %>
+<div class="max-w-2xl mx-auto bg-white rounded-3xl shadow-xl p-12 space-y-10 backdrop-blur-md border border-white/20" style="background-color: #f9fafb;">
+  <%= simple_form_for(@appointment, html: { data: { controller: "appointment-form" }, class: "space-y-6" }) do |f| %>
+    <%= f.error_notification %>
+    <%= f.error_notification message: f.object.errors[:base].to_sentence if f.object.errors[:base].present? %>
 
-  <div class="form-inputs space-y-6">
-    <div>
-      <%= f.label :patient_id, "Paciente", class: "block font-semibold mb-2 text-indigo-900" %>
-      <%= f.association :patient, input_html: { class: "border rounded-lg p-2 w-full bg-white focus:ring-2 focus:ring-indigo-500" }, prompt: "Selecione o paciente", label: false %>
-    </div>
-    <div>
-      <%= f.label :professional_id, "Profissional", class: "block font-semibold mb-2 text-indigo-900" %>
-      <%= f.association :professional, input_html: { class: "border rounded-lg p-2 w-full bg-white focus:ring-2 focus:ring-indigo-500", data: { appointment_form_target: "professional", action: "change->appointment-form#updateTimes" } }, prompt: "Selecione o profissional", label: false %>
-    </div>
-    <div>
-      <%= f.label :room_id, "Sala", class: "block font-semibold mb-2 text-indigo-900" %>
-      <%= f.association :room, input_html: { class: "border rounded-lg p-2 w-full bg-white focus:ring-2 focus:ring-indigo-500" }, prompt: "Selecione a sala", label: false %>
-    </div>
-    <div>
-      <%= f.label :start_time, "Data do atendimento", for: "appointment_start_time_3i", class: "block font-semibold mb-2 text-indigo-900" %>
-      <div class="flex flex-wrap gap-2 items-end">
-        <%= select_tag 'appointment[start_time(3i)]', options_for_select((1..31).map { |d| [d, d] }, @appointment.start_time&.day), class: "border rounded-lg p-2 bg-white focus:ring-2 focus:ring-indigo-500", id: "appointment_start_time_3i" %>
-        <%= select_tag 'appointment[start_time(2i)]', options_for_select(I18n.t('date.month_names').compact.each_with_index.map { |m, i| [m, i+1] }, @appointment.start_time&.month), class: "border rounded-lg p-2 bg-white focus:ring-2 focus:ring-indigo-500", id: "appointment_start_time_2i" %>
-        <%= select_tag 'appointment[start_time(1i)]', options_for_select((Date.current.year..(Date.current.year+5)).to_a, @appointment.start_time&.year || Date.current.year), class: "border rounded-lg p-2 bg-white focus:ring-2 focus:ring-indigo-500", id: "appointment_start_time_1i" %>
-        <span class="mx-2 font-bold">—</span>
-        <%= select_tag 'appointment[start_time(4i)]', options_for_select((0..23).map { |h| ["%02d" % h, h] }, @appointment.start_time&.hour), class: "border rounded-lg p-2 bg-white focus:ring-2 focus:ring-indigo-500", id: "appointment_start_time_4i" %>
-        <span class="font-bold">:</span>
-        <%= select_tag 'appointment[start_time(5i)]', options_for_select((0..59).map { |m| ["%02d" % m, m] }, @appointment.start_time&.min), class: "border rounded-lg p-2 bg-white focus:ring-2 focus:ring-indigo-500", data: { appointment_form_target: "date" }, id: "appointment_start_time_5i" %>
+    <div class="form-inputs space-y-6">
+      <div>
+        <%= f.label :patient_id, "Paciente", class: "block text-lg font-semibold text-indigo-800 mb-2" %>
+        <%= f.association :patient, input_html: { class: "w-full rounded-xl p-3 text-gray-900 placeholder-gray-400 shadow-inner focus:ring-2 focus:ring-indigo-500 bg-white" }, prompt: "Selecione o paciente", label: false %>
+      </div>
+
+      <div>
+        <%= f.label :professional_id, "Profissional", class: "block text-lg font-semibold text-indigo-800 mb-2" %>
+        <%= f.association :professional, input_html: { class: "w-full rounded-xl p-3 text-gray-900 placeholder-gray-400 shadow-inner focus:ring-2 focus:ring-indigo-500 bg-white", data: { appointment_form_target: "professional", action: "change->appointment-form#updateTimes" } }, prompt: "Selecione o profissional", label: false %>
+      </div>
+
+      <div>
+        <%= f.label :room_id, "Sala", class: "block text-lg font-semibold text-indigo-800 mb-2" %>
+        <%= f.association :room, input_html: { class: "w-full rounded-xl p-3 text-gray-900 placeholder-gray-400 shadow-inner focus:ring-2 focus:ring-indigo-500 bg-white" }, prompt: "Selecione a sala", label: false %>
+      </div>
+
+      <div>
+        <%= f.label :start_time, "Data do atendimento", for: "appointment_start_time_3i", class: "block text-lg font-semibold text-indigo-800 mb-2" %>
+        <div class="flex flex-wrap gap-2">
+          <%= select_tag 'appointment[start_time(3i)]', options_for_select((1..31).map { |d| [d, d] }, @appointment.start_time&.day), class: "rounded-xl p-2 bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500" %>
+          <%= select_tag 'appointment[start_time(2i)]', options_for_select(I18n.t('date.month_names').compact.each_with_index.map { |m, i| [m, i+1] }, @appointment.start_time&.month), class: "rounded-xl p-2 bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500" %>
+          <%= select_tag 'appointment[start_time(1i)]', options_for_select((Date.current.year..(Date.current.year+5)).to_a, @appointment.start_time&.year || Date.current.year), class: "rounded-xl p-2 bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500" %>
+          <span class="mx-2 font-bold text-indigo-600">-</span>
+          <%= select_tag 'appointment[start_time(4i)]', options_for_select((0..23).map { |h| ["%02d" % h, h] }, @appointment.start_time&.hour), class: "rounded-xl p-2 bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500" %>
+          <span class="font-bold text-indigo-600">:</span>
+          <%= select_tag 'appointment[start_time(5i)]', options_for_select((0..59).map { |m| ["%02d" % m, m] }, @appointment.start_time&.min), class: "rounded-xl p-2 bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500", data: { appointment_form_target: "date" } %>
+        </div>
+      </div>
+
+      <div>
+        <%= f.label :duration, "Duração da sessão", class: "block text-lg font-semibold text-indigo-800 mb-2" %>
+        <%= f.select :duration, options_for_select([["30 minutos", 30], ["45 minutos", 45], ["1 hora", 60]], @appointment.duration), {}, class: "w-full rounded-xl p-3 bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500", data: { appointment_form_target: "duration", action: "change->appointment-form#updateTimes" } %>
+      </div>
+
+      <div>
+        <%= f.label :status, "Status", class: "block text-lg font-semibold text-indigo-800 mb-2" %>
+        <%= f.input :status, input_html: { class: "w-full rounded-xl p-3 bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500" }, placeholder: "Ex: realizado, pendente, cancelado", label: false %>
+      </div>
+
+      <div>
+        <%= f.label :notes, "Observações", class: "block text-lg font-semibold text-indigo-800 mb-2" %>
+        <%= f.input :notes, input_html: { class: "w-full rounded-xl p-3 bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500" }, placeholder: "Observações gerais do atendimento", label: false %>
+      </div>
+
+      <div>
+        <%= f.label :specialty_id, "Tipo de sessão (Especialidade)", class: "block text-lg font-semibold text-indigo-800 mb-2" %>
+        <%= f.association :specialty, input_html: { class: "w-full rounded-xl p-3 bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500" }, prompt: "Selecione a especialidade", required: true, label: false %>
       </div>
     </div>
-    <div>
-      <%= f.label :duration, "Duração da sessão", class: "block font-semibold mb-2 text-indigo-900" %>
-      <%= f.select :duration, options_for_select([["30 minutos", 30], ["45 minutos", 45], ["1 hora", 60]], @appointment.duration), {}, data: { appointment_form_target: "duration", action: "change->appointment-form#updateTimes" }, class: "border rounded-lg p-2 w-full bg-white focus:ring-2 focus:ring-indigo-500" %>
-    </div>
-    <div>
-      <%= f.label :status, "Status", class: "block font-semibold mb-2 text-indigo-900" %>
-      <%= f.input :status, input_html: { class: "border rounded-lg p-2 w-full bg-white focus:ring-2 focus:ring-indigo-500" }, placeholder: "Ex: realizado, pendente, cancelado", label: false %>
-    </div>
-    <div>
-      <%= f.label :notes, "Observações", class: "block font-semibold mb-2 text-indigo-900" %>
-      <%= f.input :notes, input_html: { class: "border rounded-lg p-2 w-full bg-white focus:ring-2 focus:ring-indigo-500" }, placeholder: "Observações gerais do atendimento", label: false %>
-    </div>
-    <div>
-      <%= f.label :specialty_id, "Tipo de sessão (Especialidade)", class: "block font-semibold mb-2 text-indigo-900" %>
-      <%= f.association :specialty, input_html: { class: "border rounded-lg p-2 w-full bg-white focus:ring-2 focus:ring-indigo-500" }, prompt: "Selecione a especialidade", required: true, label: false %>
-    </div>
-  </div>
 
-  <div class="form-actions mt-8 text-center">
-    <button type="submit" class="bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 text-lg font-bold shadow transition">Salvar</button>
-  </div>
-<% end %>
+    <div class="form-actions mt-8 text-center">
+      <button type="submit" class="bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 text-lg font-bold shadow transition">Salvar</button>
+    </div>
+  <% end %>
 </div>
