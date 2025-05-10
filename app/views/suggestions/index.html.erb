@@ -2,54 +2,47 @@
   <!-- Metade de cima: Sugestões para o paciente -->
   <div class="bg-white rounded-lg shadow p-6 mb-8">
     <h2 class="text-2xl font-bold mb-4">Sugestões de Horários por Paciente</h2>
-    <div class="flex flex-wrap gap-4 items-end mb-6">
-      <div>
-        <label for="patient_id" class="block font-semibold mb-1">Paciente</label>
-        <%= form_with url: suggestions_path, method: :get, local: true do |f| %>
-          <%= select_tag :patient_id, options_from_collection_for_select(@patients, :id, :name, @selected_patient&.id), prompt: 'Selecione o paciente', class: 'form-select rounded border-gray-300' %>
-          <%= select_tag :specialty_id, options_from_collection_for_select(@specialties, :id, :name, @selected_specialty&.id), prompt: 'Todas especialidades', class: 'form-select rounded border-gray-300 ml-2' %>
-          <%= select_tag :room_id, options_from_collection_for_select(@rooms, :id, :name, @selected_room&.id), prompt: 'Todas salas', class: 'form-select rounded border-gray-300 ml-2' %>
-          <%= submit_tag 'Filtrar', class: 'btn btn-primary ml-2' %>
-        <% end %>
+    <div data-controller="suggestion">
+      <div class="flex flex-wrap gap-4 items-end mb-6">
+        <div>
+          <label class="block font-semibold mb-1">Paciente</label>
+          <select data-action="change->suggestion#updateDias" data-suggestion-target="paciente" class="form-select rounded border-gray-300 text-gray-800 bg-white">
+            <option value="">Selecione o paciente</option>
+            <% @patients.each do |p| %>
+              <option value="<%= p.id %>"><%= p.name %></option>
+            <% end %>
+          </select>
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">Dia</label>
+          <input type="date"
+                 data-action="change->suggestion#updateHorarios"
+                 data-suggestion-target="dia"
+                 class="form-input rounded border-gray-300 text-gray-800 bg-white"
+                 min="<%= Date.today %>">
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">Horário</label>
+          <select data-action="change->suggestion#updateEspecialidades" data-suggestion-target="horario" class="form-select rounded border-gray-300 text-gray-800 bg-white" disabled>
+            <option value="">Selecione o horário</option>
+            <!-- opções preenchidas via JS -->
+          </select>
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">Especialidade</label>
+          <select data-suggestion-target="especialidade" class="form-select rounded border-gray-300 text-gray-800 bg-white" disabled>
+            <option value="">Selecione a especialidade</option>
+            <!-- opções preenchidas via JS -->
+          </select>
+        </div>
+        <div class="flex items-end h-full">
+          <button type="button" data-action="click->suggestion#buscarSugestoes" data-suggestion-target="buscar" class="btn btn-primary ml-2" disabled>Buscar</button>
+        </div>
+      </div>
+      <div data-suggestion-target="sugestoes" class="mt-6">
+        <!-- sugestões de profissionais e salas aparecem aqui -->
       </div>
     </div>
-    <% if @selected_patient %>
-      <div class="overflow-x-auto">
-        <table class="min-w-full text-sm text-center border">
-          <thead>
-            <tr>
-              <th class="p-2 border">Horário</th>
-              <% @week_days.each do |day| %>
-                <th class="p-2 border"><%= l(day, format: :short) %></th>
-              <% end %>
-            </tr>
-          </thead>
-          <tbody>
-            <% @hours.each do |hour| %>
-              <tr>
-                <td class="p-2 border font-semibold"><%= hour %></td>
-                <% @week_days.each do |day| %>
-                  <td class="p-2 border">
-                    <% if @suggestions[day][hour].present? %>
-                      <% @suggestions[day][hour].each do |room| %>
-                        <div class="mb-1 bg-green-100 text-green-800 rounded px-2 py-1 inline-block">
-                          Sala <%= room.name %>
-                          <%= button_to 'Agendar', new_appointment_path(patient_id: @selected_patient.id, start_time: day.to_s + ' ' + hour, room_id: room.id), method: :get, class: 'ml-2 text-xs btn btn-primary' %>
-                        </div>
-                      <% end %>
-                    <% else %>
-                      <span class="text-gray-400">-</span>
-                    <% end %>
-                  </td>
-                <% end %>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
-      </div>
-    <% else %>
-      <p class="text-gray-500 mt-4">Selecione um paciente para ver sugestões de horários.</p>
-    <% end %>
   </div>
 
   <!-- Metade de baixo: Sugestões para profissionais -->

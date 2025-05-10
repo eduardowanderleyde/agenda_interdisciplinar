@@ -1,31 +1,26 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
-
 require 'faker'
 
 # Criar especialidades
 specialties = [
-  { name: 'Psicologia ABA', description: 'Atendimento psicológico com abordagem ABA' },
-  { name: 'Psicopedagogia', description: 'Avaliação e intervenção psicopedagógica' },
-  { name: 'Musicoterapia', description: 'Terapia através da música' },
-  { name: 'Psicomotricidade', description: 'Trabalho corporal e motor' },
-  { name: 'Terapia ocupacional AVD', description: 'Atividades de Vida Diária' },
-  { name: 'Terapia Ocupacional IS', description: 'Integração sensorial' },
-  { name: 'Fonoaudiologia', description: 'Avaliação e intervenção fonoaudiológica' },
-  { name: 'Fisioterapia', description: 'Avaliação e intervenção fisioterapêutica' }
+  { name: 'Psicologia ABA', description: 'Atendimento psicológico com abordagem ABA', default_duration: 45 },
+  { name: 'Psicopedagogia', description: 'Avaliação e intervenção psicopedagógica', default_duration: 60 },
+  { name: 'Musicoterapia', description: 'Terapia através da música', default_duration: 45 },
+  { name: 'Psicomotricidade', description: 'Trabalho corporal e motor', default_duration: 30 },
+  { name: 'Terapia ocupacional AVD', description: 'Atividades de Vida Diária', default_duration: 45 },
+  { name: 'Terapia Ocupacional IS', description: 'Integração sensorial', default_duration: 60 },
+  { name: 'Fonoaudiologia', description: 'Avaliação e intervenção fonoaudiológica', default_duration: 30 },
+  { name: 'Fisioterapia', description: 'Avaliação e intervenção fisioterapêutica', default_duration: 45 }
 ]
 
+# Limpar registros antigos na ordem correta
+Appointment.destroy_all
+ProfessionalSpecialty.destroy_all
+PatientSpecialty.destroy_all
 Specialty.destroy_all
 specialties.each do |specialty|
   Specialty.find_or_create_by!(name: specialty[:name]) do |s|
     s.description = specialty[:description]
+    s.default_duration = specialty[:default_duration]
   end
 end
 
@@ -47,25 +42,39 @@ Professional.destroy_all
   professional = Professional.create!(
     name: Faker::Name.name,
     available_days: %w[monday tuesday wednesday thursday friday].sample(3),
-    available_hours: ['08:00', '09:00', '10:00', '14:00', '15:00', '16:00'].sample(4)
+    available_hours: ['08:00 - 12:00', '13:00 - 17:00'].sample(rand(1..2))
   )
 
   # Adicionar especialidades aleatórias (garantido que existam)
   professional.specialties << all_specialties.sample(rand(1..3))
 end
 
+# Garante que a especialidade "Acompanhamento" exista
+acompanhamento = Specialty.find_or_create_by!(name: 'Acompanhamento') do |s|
+  s.description = 'Acompanhamento geral'
+  s.default_duration = 45
+end
+
+# Atualiza lista de especialidades (sempre incluindo Acompanhamento)
+all_specialties = Specialty.all.to_a
+all_specialties << acompanhamento unless all_specialties.any? { |s| s.name == 'Acompanhamento' }
+
 # Criar pacientes fakes
 Patient.destroy_all
 10.times do
-  patient = Patient.create!(
+  # Sorteia outras especialidades (sem incluir "Acompanhamento" para evitar duplicidade)
+  outras = all_specialties.reject { |s| s.name == 'Acompanhamento' }
+  specialties_for_patient = outras.sample(rand(0..[3, outras.size].min))
+  # Sempre inclui "Acompanhamento"
+  specialty_ids = [acompanhamento.id] + specialties_for_patient.map(&:id)
+
+  Patient.create!(
     name: Faker::Name.name,
     birthdate: Faker::Date.birthday(min_age: 3, max_age: 18),
     diagnosis: ['TEA', 'TDAH', 'Dislexia', 'Atraso de fala'].sample,
-    observations: Faker::Lorem.sentence(word_count: 8)
+    observations: Faker::Lorem.sentence(word_count: 8),
+    specialty_ids: specialty_ids
   )
-
-  # Adicionar especialidades necessárias
-  patient.specialties << all_specialties.sample(rand(1..4))
 end
 
 # Criar agendamentos fakes
@@ -80,15 +89,29 @@ if Patient.any? && Professional.any? && Room.any?
     start_time = Time.zone.local(day.year, day.month, day.day, hour, [0, 30].sample)
     duration = [30, 45, 60].sample
 
-    Appointment.create!(
-      patient: patient,
-      professional: professional,
-      room: room,
-      start_time: start_time,
-      duration: duration,
-      status: %w[agendado realizado cancelado].sample,
-      notes: Faker::Lorem.sentence(word_count: 6)
-    )
+    # Tenta criar o agendamento até 5 vezes, verificando conflito de horário
+    success = false
+    5.times do
+      Appointment.create!(
+        patient: patient,
+        professional: professional,
+        room: room,
+        start_time: start_time,
+        duration: duration,
+        status: %w[agendado realizado cancelado].sample,
+        notes: Faker::Lorem.sentence(word_count: 6),
+        specialty: patient.specialties.sample
+      )
+      success = true
+      break
+    rescue ActiveRecord::RecordInvalid => e
+      # Se houver conflito, tenta outro horário
+      day = Faker::Date.between(from: 3.days.ago, to: 7.days.from_now)
+      hour = [8, 9, 10, 14, 15, 16].sample
+      start_time = Time.zone.local(day.year, day.month, day.day, hour, [0, 30].sample)
+    end
+    # Se não conseguiu após 5 tentativas, pula para o próximo agendamento
+    next unless success
   end
 end
 

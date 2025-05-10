@@ -1,0 +1,82 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <div class="px-4 py-5 sm:px-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h3 class="text-lg leading-6 font-medium text-gray-900">Detalhes da Especialidade</h3>
+          <p class="mt-1 max-w-2xl text-sm text-gray-500">Informações detalhadas sobre a especialidade.</p>
+        </div>
+        <div class="flex space-x-3">
+          <%= link_to "Editar", edit_specialty_path(@specialty), class: "inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" %>
+          <%= button_to "Excluir", @specialty, method: :delete, class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500", data: { confirm: "Tem certeza?" } %>
+        </div>
+      </div>
+    </div>
+    <div class="border-t border-gray-200">
+      <dl>
+        <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+          <dt class="text-sm font-medium text-gray-500">Nome</dt>
+          <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2"><%= @specialty.name %></dd>
+        </div>
+        <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+          <dt class="text-sm font-medium text-gray-500">Descrição</dt>
+          <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2"><%= @specialty.description %></dd>
+        </div>
+        <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+          <dt class="text-sm font-medium text-gray-500">Duração Padrão</dt>
+          <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2"><%= @specialty.default_duration %> minutos</dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+
+  <div class="mt-8">
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+      <div class="px-4 py-5 sm:px-6">
+        <h3 class="text-lg leading-6 font-medium text-gray-900">Profissionais com esta Especialidade</h3>
+        <p class="mt-1 max-w-2xl text-sm text-gray-500">Lista de profissionais que possuem esta especialidade.</p>
+      </div>
+      <div class="border-t border-gray-200">
+        <ul role="list" class="divide-y divide-gray-200">
+          <% @specialty.professionals.each do |professional| %>
+            <li class="px-4 py-4 sm:px-6">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <p class="text-sm font-medium text-indigo-600 truncate"><%= professional.name %></p>
+                </div>
+                <div class="ml-2 flex-shrink-0 flex">
+                  <%= link_to "Ver Perfil", professional_path(professional), class: "text-sm text-indigo-600 hover:text-indigo-900" %>
+                </div>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-8">
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+      <div class="px-4 py-5 sm:px-6">
+        <h3 class="text-lg leading-6 font-medium text-gray-900">Pacientes com esta Especialidade</h3>
+        <p class="mt-1 max-w-2xl text-sm text-gray-500">Lista de pacientes que necessitam desta especialidade.</p>
+      </div>
+      <div class="border-t border-gray-200">
+        <ul role="list" class="divide-y divide-gray-200">
+          <% @specialty.patients.each do |patient| %>
+            <li class="px-4 py-4 sm:px-6">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <p class="text-sm font-medium text-indigo-600 truncate"><%= patient.name %></p>
+                </div>
+                <div class="ml-2 flex-shrink-0 flex">
+                  <%= link_to "Ver Perfil", patient_path(patient), class: "text-sm text-indigo-600 hover:text-indigo-900" %>
+                </div>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div> 

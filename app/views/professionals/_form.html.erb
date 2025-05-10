@@ -94,29 +94,54 @@
                 <% end %>
               </ul>
 
-              <script>
-                document.addEventListener('DOMContentLoaded', function () {
-                  var btn = document.getElementById('btn-adicionar-<%= dia_key %>');
-                  var lista = document.getElementById('lista-horarios-<%= dia_key %>');
-                  btn.onclick = function () {
-                    var inicio = document.querySelector('input.js-inicio[data-dia="<%= dia_key %>"]').value.trim();
-                    var fim = document.querySelector('input.js-fim[data-dia="<%= dia_key %>"]').value.trim();
-                    if (!inicio || !fim) {
-                      alert('Preencha início e fim!');
-                      return;
-                    }
-                    var texto = inicio + ' - ' + fim;
-                    var li = document.createElement('li');
-                    li.className = 'flex items-center bg-green-100 text-green-900 rounded px-3 py-1 mb-1 font-semibold text-xs shadow-sm';
-                    li.innerHTML = `<span>${texto}</span>
-                      <input type="hidden" name="professional[available_hours][<%= dia_key %>][]" value="${texto}">
-                      <button type="button" onclick="this.parentElement.remove()" class="ml-2 text-red-600 hover:text-red-800 font-bold text-lg bg-transparent border-none cursor-pointer">&times;</button>`;
-                    lista.appendChild(li);
-                    document.querySelector('input.js-inicio[data-dia="<%= dia_key %>"]').value = '';
-                    document.querySelector('input.js-fim[data-dia="<%= dia_key %>"]').value = '';
-                  };
-                });
-              </script>
+                <script>
+                  document.addEventListener('DOMContentLoaded', function () {
+                    var btn = document.getElementById('btn-adicionar-<%= dia_key %>');
+                    var lista = document.getElementById('lista-horarios-<%= dia_key %>');
+                    btn.onclick = function () {
+                      var inicio = document.querySelector('input.js-inicio[data-dia="<%= dia_key %>"]').value.trim();
+                      var fim = document.querySelector('input.js-fim[data-dia="<%= dia_key %>"]').value.trim();
+
+                      console.log(inicio, fim);
+                      if (!inicio || !fim) {
+                        alert('Preencha início e fim!');
+                        return;
+                      }
+
+                      // Formata o intervalo como "início - fim"
+                      var texto = inicio + ' - ' + fim;
+
+                      // Verifica se o intervalo já existe na lista
+                      var horariosExistentes = Array.from(lista.querySelectorAll('li span')).map(function(span) {
+                        return span.textContent.trim();
+                      });
+
+                      // Verificação de sobreposição
+                      var conflito = horariosExistentes.some(function(intervalo) {
+                        var [existeInicio, existeFim] = intervalo.split(' - ');
+                        return (inicio < existeFim && fim > existeInicio); // Verifica se há interseção de horários
+                      });
+
+                      if (conflito) {
+                        alert('Este intervalo se sobrepõe com outro existente!');
+                        return;
+                      }
+
+                      // Se o intervalo não for duplicado, adiciona à lista
+                      var li = document.createElement('li');
+                      li.className = 'flex items-center bg-green-100 text-green-900 rounded px-3 py-1 mb-1 font-semibold text-xs shadow-sm';
+                      li.innerHTML = `<span>${texto}</span>
+                        <input type="hidden" name="professional[available_hours][<%= dia_key %>][]" value="${texto}">
+                        <button type="button" onclick="this.parentElement.remove()" class="ml-2 text-red-600 hover:text-red-800 font-bold text-lg bg-transparent border-none cursor-pointer">&times;</button>`;
+                      lista.appendChild(li);
+
+                      // Limpa os campos de entrada de horário
+                      document.querySelector('input.js-inicio[data-dia="<%= dia_key %>"]').value = '';
+                      document.querySelector('input.js-fim[data-dia="<%= dia_key %>"]').value = '';
+                    };
+                  });
+                </script>
+
             </div>
           <% end %>
         </div>

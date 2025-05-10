@@ -17,7 +17,15 @@ Rails.application.routes.draw do
 
   resources :evolutions, only: %i[index show edit update destroy]
   resources :patients
-  resources :suggestions, only: [:index]
+  resources :specialties
+  resources :suggestions, only: [:index] do
+    collection do
+      get :dias
+      get :horarios
+      get :especialidades
+      get :sugestoes
+    end
+  end
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

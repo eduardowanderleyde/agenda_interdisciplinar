@@ -19,3 +19,6 @@ application.register("horarios", HorariosController)
 
 import PlannerController from "./planner_controller"
 application.register("planner", PlannerController)
+
+import SuggestionController from "./suggestion_controller"
+application.register("suggestion", SuggestionController)

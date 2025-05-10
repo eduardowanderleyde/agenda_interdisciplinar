@@ -30,7 +30,7 @@ class Professional < ApplicationRecord
   def available_hours_format
     return if available_hours.blank? || !available_hours.is_a?(Hash)
 
-    regex = /\A\d{2}:\d{2} - \d{2}:\d{2}\z/
+    regex = /\A\d{2}:\d{2} - \d{2}:\d{2}\z/ # O formato esperado é "HH:MM - HH:MM"
     available_hours.each do |dia, intervalos|
       Array(intervalos).each do |intervalo|
         unless intervalo.is_a?(String) && intervalo.match?(regex)
