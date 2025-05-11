@@ -1,11 +1,11 @@
 <div class="max-w-6xl mx-auto py-8">
   <!-- Metade de cima: Sugestões para o paciente -->
   <div class="bg-white rounded-lg shadow p-6 mb-8">
-    <h2 class="text-2xl font-bold mb-4">Sugestões de Horários por Paciente</h2>
+    <h2 class="text-2xl font-bold mb-4 text-gray-900">Sugestões de Horários por Paciente</h2>
     <div data-controller="suggestion">
       <div class="flex flex-wrap gap-4 items-end mb-6">
         <div>
-          <label class="block font-semibold mb-1">Paciente</label>
+          <label class="block font-semibold mb-1 text-gray-900">Paciente</label>
           <select data-action="change->suggestion#updateDias" data-suggestion-target="paciente" class="form-select rounded border-gray-300 text-gray-800 bg-white">
             <option value="">Selecione o paciente</option>
             <% @patients.each do |p| %>
@@ -14,7 +14,7 @@
           </select>
         </div>
         <div>
-          <label class="block font-semibold mb-1">Dia</label>
+          <label class="block font-semibold mb-1 text-gray-900">Dia</label>
           <input type="date"
                  data-action="change->suggestion#updateHorarios"
                  data-suggestion-target="dia"
@@ -22,14 +22,15 @@
                  min="<%= Date.today %>">
         </div>
         <div>
-          <label class="block font-semibold mb-1">Horário</label>
+          <label class="block font-semibold mb-1 text-gray-900">Horário</label>
+
           <select data-action="change->suggestion#updateEspecialidades" data-suggestion-target="horario" class="form-select rounded border-gray-300 text-gray-800 bg-white" disabled>
             <option value="">Selecione o horário</option>
             <!-- opções preenchidas via JS -->
           </select>
         </div>
         <div>
-          <label class="block font-semibold mb-1">Especialidade</label>
+          <label class="block font-semibold mb-1 text-gray-900">Especialidade</label>
           <select data-suggestion-target="especialidade" class="form-select rounded border-gray-300 text-gray-800 bg-white" disabled>
             <option value="">Selecione a especialidade</option>
             <!-- opções preenchidas via JS -->
@@ -47,10 +48,11 @@
 
   <!-- Metade de baixo: Sugestões para profissionais -->
   <div class="bg-white rounded-lg shadow p-6">
-    <h2 class="text-2xl font-bold mb-4">Sugestões de Pacientes por Profissional</h2>
+    <h2 class="text-2xl font-bold mb-4 text-gray-900">Sugestões de Pacientes por Profissional</h2>
+
     <div class="flex flex-wrap gap-4 items-end mb-6">
       <div>
-        <label for="specialty_prof" class="block font-semibold mb-1">Especialidade</label>
+        <label for="specialty_prof" class="block font-semibold mb-1 text-black">Especialidade</label>
         <%= form_with url: suggestions_path, method: :get, local: true do |f| %>
           <%= select_tag :specialty_prof, options_from_collection_for_select(@specialties, :id, :name, params[:specialty_prof]), prompt: 'Todas especialidades', class: 'form-select rounded border-gray-300' %>
           <%= submit_tag 'Filtrar', class: 'btn btn-primary ml-2' %>
@@ -61,24 +63,24 @@
       <table class="min-w-full text-sm text-center border">
         <thead>
           <tr>
-            <th class="p-2 border">Profissional</th>
-            <th class="p-2 border">Especialidades</th>
-            <th class="p-2 border">Sugestões de Pacientes e Horários</th>
+            <th class="p-2 border text-black">Profissional</th>
+            <th class="p-2 border text-black">Especialidades</th>
+            <th class="p-2 border text-black">Sugestões de Pacientes e Horários</th>
           </tr>
         </thead>
         <tbody>
           <% Professional.includes(:specialties).each do |prof| %>
             <% next if params[:specialty_prof].present? && !prof.specialty_ids.include?(params[:specialty_prof].to_i) %>
             <tr>
-              <td class="p-2 border font-semibold"><%= prof.name %></td>
-              <td class="p-2 border">
+              <td class="p-2 border font-semibold text-black"><%= prof.name %></td>
+              <td class="p-2 border text-black">
                 <% prof.specialties.each do |spec| %>
                   <span class="inline-block bg-blue-100 text-blue-800 rounded px-2 py-1 text-xs mr-1"><%= spec.name %></span>
                 <% end %>
               </td>
               <td class="p-2 border">
                 <!-- Aqui pode ser evoluído para mostrar sugestões reais cruzando horários livres do profissional, pacientes e salas -->
-                <span class="text-gray-400">(Em breve: sugestões detalhadas)</span>
+                <span class="text-black">(Em breve: sugestões detalhadas)</span>
               </td>
             </tr>
           <% end %>
