@@ -1,7 +1,7 @@
 /* Estilos personalizados para a aplicação */
 
 body {
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  background: #f8fafc;
   min-height: 100vh;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: #1f2937;
@@ -10,14 +10,12 @@ body {
 }
 
 .card-custom {
-  background: rgba(255, 255, 255, 0.95);
+  background: #ffffff;
   border-radius: 1rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   padding: 2rem;
   margin: 2rem auto;
   max-width: 600px;
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
   color: #1f2937;
 }
 
@@ -199,9 +197,9 @@ a:hover {
 }
 
 .planner-container {
-  background: rgba(255,255,255,0.95);
+  background: #ffffff;
   border-radius: 1rem;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   padding: 2.5rem 2.5rem 2rem 2.5rem;
   margin: 2rem auto 0 auto;
   max-width: 1400px;
@@ -275,13 +273,6 @@ a:hover {
   text-shadow: 0 2px 8px #05966922;
 }
 
-.planner-full table {
-  width: 96vw;
-  max-width: 1400px;
-  margin: 0 auto 2.5rem auto;
-  border-radius: 1rem;
-  overflow: hidden;
-}
 
 .planner-full th, .planner-full td {
   text-align: center;

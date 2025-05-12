@@ -116,4 +116,70 @@ class SuggestionsController < ApplicationController
       profissionais: profissionais.map { |p| { id: p.id, name: p.name } }
     }
   end
+
+  def simulate_schedule
+    # Parâmetros opcionais: data de início da semana
+    start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : Date.today.beginning_of_week
+    end_date = start_date + 6.days
+    week_days = (start_date..end_date).to_a
+    hours = ['08:00', '09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00']
+    rooms = Room.order(:name).to_a
+    professionals = Professional.includes(:specialties).to_a
+    patients = Patient.includes(:specialties).to_a
+    specialties = Specialty.all.index_by(&:id)
+
+    # Montar grade vazia: [dia][hora][sala] = nil
+    grade = {}
+    week_days.each do |dia|
+      grade[dia] = {}
+      hours.each do |hora|
+        grade[dia][hora] = {}
+        rooms.each { |sala| grade[dia][hora][sala.id] = nil }
+      end
+    end
+
+    # Simulação: para cada paciente, tentar encaixar em horários disponíveis com profissional e sala compatíveis
+    patients.each do |patient|
+      patient.specialties.each do |spec|
+        week_days.each do |dia|
+          dia_semana = dia.strftime('%A').downcase
+          hours.each do |hora|
+            professionals_disponiveis = professionals.select do |prof|
+              prof.specialty_ids.include?(spec.id) &&
+                prof.available_days.include?(dia_semana) &&
+                prof.available_hours[dia_semana]&.any? { |intervalo|
+                  ini, fim = intervalo.split(' - ')
+                  hora >= ini && hora < fim
+                }
+            end
+            next if professionals_disponiveis.empty?
+            sala_livre = rooms.find { |sala| grade[dia][hora][sala.id].nil? }
+            next unless sala_livre
+            profissional = professionals_disponiveis.find do |prof|
+              # Profissional não pode estar ocupado nesse horário/sala
+              rooms.all? { |sala|
+                grade[dia][hora][sala.id].nil? || grade[dia][hora][sala.id][:professional_id] != prof.id
+              }
+            end
+            next unless profissional
+            # Paciente não pode estar ocupado nesse horário
+            ocupado = rooms.any? { |sala| grade[dia][hora][sala.id]&.dig(:patient_id) == patient.id }
+            next if ocupado
+            # Encaixa!
+            grade[dia][hora][sala_livre.id] = {
+              patient_id: patient.id,
+              patient_name: patient.name,
+              professional_id: profissional.id,
+              professional_name: profissional.name,
+              specialty: spec.name
+            }
+            break # Só um agendamento por paciente por horário
+          end
+        end
+      end
+    end
+
+    # Renderizar a grade como partial HTML
+    render partial: 'simulacao_grade', locals: { grade: grade, week_days: week_days, hours: hours, rooms: rooms }
+  end
 end

@@ -30,9 +30,7 @@
         <% end %>
 
         <%= turbo_frame_tag "modal" %>
-        <div class="card-custom">
-          <%= yield %>
-        </div>
+        <%= yield %>
       </main>
     <% else %>
       <%= yield %>

@@ -36,83 +36,76 @@ Room.destroy_all
   end
 end
 
-# Criar profissionais fakes
+# Profissionais brasileiros com muita disponibilidade
+def nomes_profissionais
+  [
+    'Camila Rocha', 'Pedro Lima', 'Fernanda Souza', 'Lucas Almeida', 'Juliana Castro',
+    'Rafael Martins', 'Patrícia Oliveira', 'Bruno Carvalho', 'Marina Duarte', 'André Barbosa'
+  ]
+end
 Professional.destroy_all
-5.times do
-  professional = Professional.create!(
-    name: Faker::Name.name,
-    available_days: %w[monday tuesday wednesday thursday friday].sample(3),
-    available_hours: ['08:00 - 12:00', '13:00 - 17:00'].sample(rand(1..2))
+nomes_profissionais.each do |nome|
+  Professional.create!(
+    name: nome,
+    available_days: %w[monday tuesday wednesday thursday friday],
+    available_hours: {
+      'monday' => ['08:00 - 12:00', '13:00 - 17:00'],
+      'tuesday' => ['08:00 - 12:00', '13:00 - 17:00'],
+      'wednesday' => ['08:00 - 12:00', '13:00 - 17:00'],
+      'thursday' => ['08:00 - 12:00', '13:00 - 17:00'],
+      'friday' => ['08:00 - 12:00', '13:00 - 17:00']
+    },
+    specialties: all_specialties.sample(rand(2..3))
   )
-
-  # Adicionar especialidades aleatórias (garantido que existam)
-  professional.specialties << all_specialties.sample(rand(1..3))
 end
 
-# Garante que a especialidade "Acompanhamento" exista
-acompanhamento = Specialty.find_or_create_by!(name: 'Acompanhamento') do |s|
-  s.description = 'Acompanhamento geral'
-  s.default_duration = 45
+# Pacientes brasileiros com responsáveis e diagnósticos reais
+def nomes_pacientes
+  [
+    'Lucas Silva', 'Ana Beatriz Souza', 'Gabriel Oliveira', 'Mariana Lima', 'Rafael Costa',
+    'Isabela Martins', 'Pedro Henrique Alves', 'Lívia Fernandes', 'Matheus Rocha', 'Sofia Cardoso',
+    'João Pedro Ribeiro', 'Laura Mendes', 'Enzo Almeida', 'Helena Duarte', 'Gustavo Barbosa'
+  ]
 end
-
-# Atualiza lista de especialidades (sempre incluindo Acompanhamento)
-all_specialties = Specialty.all.to_a
-all_specialties << acompanhamento unless all_specialties.any? { |s| s.name == 'Acompanhamento' }
-
-# Criar pacientes fakes
+def nomes_responsaveis
+  [
+    'Maria da Silva', 'João Pereira', 'Patrícia Souza', 'Carlos Henrique', 'Fernanda Lima',
+    'Roberta Castro', 'André Martins', 'Juliana Oliveira', 'Bruno Fernandes', 'Camila Duarte'
+  ]
+end
 Patient.destroy_all
-10.times do
-  # Sorteia outras especialidades (sem incluir "Acompanhamento" para evitar duplicidade)
-  outras = all_specialties.reject { |s| s.name == 'Acompanhamento' }
-  specialties_for_patient = outras.sample(rand(0..[3, outras.size].min))
-  # Sempre inclui "Acompanhamento"
-  specialty_ids = [acompanhamento.id] + specialties_for_patient.map(&:id)
-
+diagnosticos = ['TEA', 'TDAH', 'Dislexia', 'Atraso de fala', 'Deficiência Intelectual', 'Transtorno de Ansiedade']
+nomes_pacientes.each_with_index do |nome, idx|
   Patient.create!(
-    name: Faker::Name.name,
-    birthdate: Faker::Date.birthday(min_age: 3, max_age: 18),
-    diagnosis: ['TEA', 'TDAH', 'Dislexia', 'Atraso de fala'].sample,
+    name: nome,
+    birthdate: Faker::Date.birthday(min_age: 4, max_age: 16),
+    diagnosis: diagnosticos.sample,
+    responsible: nomes_responsaveis[idx % nomes_responsaveis.size],
     observations: Faker::Lorem.sentence(word_count: 8),
-    specialty_ids: specialty_ids
+    specialty_ids: all_specialties.sample(rand(1..3)).map(&:id)
   )
 end
 
-# Criar agendamentos fakes
-if Patient.any? && Professional.any? && Room.any?
-  Appointment.destroy_all
-  20.times do
-    patient = Patient.order('RANDOM()').first
-    professional = Professional.order('RANDOM()').first
-    room = Room.order('RANDOM()').first
-    day = Faker::Date.between(from: 3.days.ago, to: 7.days.from_now)
-    hour = [8, 9, 10, 14, 15, 16].sample
-    start_time = Time.zone.local(day.year, day.month, day.day, hour, [0, 30].sample)
-    duration = [30, 45, 60].sample
-
-    # Tenta criar o agendamento até 5 vezes, verificando conflito de horário
-    success = false
-    5.times do
-      Appointment.create!(
-        patient: patient,
-        professional: professional,
-        room: room,
-        start_time: start_time,
-        duration: duration,
-        status: %w[agendado realizado cancelado].sample,
-        notes: Faker::Lorem.sentence(word_count: 6),
-        specialty: patient.specialties.sample
-      )
-      success = true
-      break
-    rescue ActiveRecord::RecordInvalid => e
-      # Se houver conflito, tenta outro horário
-      day = Faker::Date.between(from: 3.days.ago, to: 7.days.from_now)
-      hour = [8, 9, 10, 14, 15, 16].sample
-      start_time = Time.zone.local(day.year, day.month, day.day, hour, [0, 30].sample)
-    end
-    # Se não conseguiu após 5 tentativas, pula para o próximo agendamento
-    next unless success
-  end
+# Poucos agendamentos para facilitar organização automática
+Appointment.destroy_all
+3.times do
+  patient = Patient.order('RANDOM()').first
+  professional = Professional.order('RANDOM()').first
+  room = Room.order('RANDOM()').first
+  day = Faker::Date.between(from: 2.days.ago, to: 2.days.from_now)
+  hour = [8, 9, 10, 14, 15, 16].sample
+  start_time = Time.zone.local(day.year, day.month, day.day, hour, [0, 30].sample)
+  duration = [30, 45, 60].sample
+  Appointment.create!(
+    patient: patient,
+    professional: professional,
+    room: room,
+    start_time: start_time,
+    duration: duration,
+    status: %w[agendado realizado cancelado].sample,
+    notes: Faker::Lorem.sentence(word_count: 6),
+    specialty: patient.specialties.sample
+  )
 end
 
 # Usuário admin

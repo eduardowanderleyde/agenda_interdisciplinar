@@ -3,6 +3,29 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = ["paciente", "dia", "horario", "especialidade", "buscar", "sugestoes"]
 
+  connect() {
+    console.log("Stimulus suggestion conectado!");
+    const btnSimular = document.getElementById('btn-simular-horario');
+    if (btnSimular) {
+      btnSimular.addEventListener('click', this.simularHorarioSemana.bind(this));
+    }
+  }
+
+  simularHorarioSemana() {
+    const simulacaoDiv = document.getElementById('simulacao-horario-semanal');
+    if (simulacaoDiv) {
+      simulacaoDiv.innerHTML = '<div class="text-gray-500">Simulando organização da semana...</div>';
+      fetch('/suggestions/simulate_schedule')
+        .then(r => r.text())
+        .then(html => {
+          simulacaoDiv.innerHTML = html;
+        })
+        .catch(() => {
+          simulacaoDiv.innerHTML = '<div class="text-red-600">Erro ao simular a semana.</div>';
+        });
+    }
+  }
+
   updateDias() {
     const pacienteId = this.pacienteTarget.value
     this.diaTarget.innerHTML = '<option value="">Carregando...</option>'

@@ -24,6 +24,7 @@ Rails.application.routes.draw do
       get :horarios
       get :especialidades
       get :sugestoes
+      get :simulate_schedule
     end
   end
 

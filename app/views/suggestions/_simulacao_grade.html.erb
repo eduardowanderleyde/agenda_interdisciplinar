@@ -1,0 +1,44 @@
+<div class="flex justify-center w-full">
+  <div class="planner-full-table-container max-w-7xl mx-auto">
+    <table class="planner-nicepage-table min-w-[900px] w-full border-separate border-spacing-0 bg-white rounded-2xl shadow-xl text-base">
+      <thead>
+        <tr>
+          <th class="py-4 px-6 border-b-2 bg-blue-100 text-blue-900 text-lg font-extrabold sticky left-0 z-10">Horário</th>
+          <% week_days.each do |dia| %>
+            <th class="py-4 px-6 border-b-2 bg-blue-100 text-blue-900 text-lg font-extrabold">
+              <div>
+                <%= I18n.l(dia, format: '%A', locale: :'pt-BR') %><br><span class="text-base font-bold"><%= dia.strftime('%d/%m') %></span>
+              </div>
+            </th>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody>
+        <% hours.each do |hora| %>
+          <tr>
+            <td class="py-4 px-6 border-b bg-blue-50 font-semibold text-blue-900 sticky left-0 z-10 align-middle"><%= hora %></td>
+            <% week_days.each do |dia| %>
+              <td class="py-4 px-6 border-b align-top bg-white min-w-[180px]">
+                <% salas = rooms.select { |sala| grade[dia][hora][sala.id].present? } %>
+                <% if salas.any? %>
+                  <% salas.each do |sala| %>
+                    <% ag = grade[dia][hora][sala.id] %>
+                    <div class="mb-3 p-3 rounded-xl bg-blue-50 border border-blue-200 text-sm text-center shadow">
+                      <div class="font-bold text-blue-800 text-base mb-1">
+                        <%= sala.name %> - <%= ag[:specialty] %>
+                      </div>
+                      <div class="text-gray-700 mb-1">Paciente: <%= ag[:patient_name] %></div>
+                      <div class="text-gray-700">Profissional: <%= ag[:professional_name] %></div>
+                    </div>
+                  <% end %>
+                <% else %>
+                  <span class="text-gray-400 font-semibold">Livre</span>
+                <% end %>
+              </td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div> 
