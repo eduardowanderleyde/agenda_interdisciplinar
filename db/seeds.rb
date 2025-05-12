@@ -49,11 +49,11 @@ nomes_profissionais.each do |nome|
     name: nome,
     available_days: %w[monday tuesday wednesday thursday friday],
     available_hours: {
-      'monday' => ['08:00 - 12:00', '13:00 - 17:00'],
-      'tuesday' => ['08:00 - 12:00', '13:00 - 17:00'],
-      'wednesday' => ['08:00 - 12:00', '13:00 - 17:00'],
-      'thursday' => ['08:00 - 12:00', '13:00 - 17:00'],
-      'friday' => ['08:00 - 12:00', '13:00 - 17:00']
+      'monday' => ['07:00 - 19:00'],
+      'tuesday' => ['07:00 - 19:00'],
+      'wednesday' => ['07:00 - 19:00'],
+      'thursday' => ['07:00 - 19:00'],
+      'friday' => ['07:00 - 19:00']
     },
     specialties: all_specialties.sample(rand(2..3))
   )
