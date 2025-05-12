@@ -14,6 +14,7 @@
             <th class="text-left font-bold px-4 py-3">Nome</th>
             <th class="text-left font-bold px-4 py-3">Dias Disponíveis</th>
             <th class="text-left font-bold px-4 py-3">Horários Disponíveis</th>
+            <th class="text-center font-bold px-4 py-3">Disponível essa semana</th>
             <th class="text-center font-bold px-4 py-3">Ações</th>
           </tr>
         </thead>
@@ -28,36 +29,40 @@
             'sunday' => 'Domingo', 'sun' => 'Domingo', 'domingo' => 'Domingo', 'd' => 'Domingo'
           } %>
           <% @professionals.each do |professional| %>
-            <% cache(professional) do %>
-              <tr>
-                <td class="px-4 py-4 font-semibold text-gray-900"><%= professional.name %></td>
-                <td class="px-4 py-4">
-                  <% dias = (professional.available_days || []).map { |d| dias_semana[d.to_s.strip.downcase] || d }.uniq.join(', ') %>
-                  <%= dias.presence || '-' %>
-                </td>
-                <td class="px-4 py-4">
-                  <% dias_semana_lista = [
-                    ['monday', 'Segunda'],
-                    ['tuesday', 'Terça'],
-                    ['wednesday', 'Quarta'],
-                    ['thursday', 'Quinta'],
-                    ['friday', 'Sexta']
-                  ] %>
-                  <% ah = professional.available_hours.is_a?(Hash) ? professional.available_hours : {} %>
-                  <% horarios = dias_semana_lista.map do |dia_key, dia_label|
-                    hs = (ah[dia_key] || [])
-                    hs.any? ? "#{dia_label}: #{hs.join(', ')}" : nil
-                  end.compact.join(' | ') %>
-                  <%= horarios.presence || '-' %>
-                </td>
-                <td class="px-4 py-4 text-center">
-                  <div class="flex justify-center gap-3">
-                    <%= link_to 'Editar', edit_professional_path(professional), class: 'bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-bold shadow' %>
-                    <%= button_to 'Excluir', professional_path(professional), method: :delete, data: { confirm: 'Tem certeza?' }, class: 'bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-bold shadow' %>
-                  </div>
-                </td>
-              </tr>
-            <% end %>
+            <tr>
+              <td class="px-4 py-4 font-semibold text-gray-900"><%= professional.name %></td>
+              <td class="px-4 py-4">
+                <% dias = (professional.available_days || []).map { |d| dias_semana[d.to_s.strip.downcase] || d }.uniq.join(', ') %>
+                <%= dias.presence || '-' %>
+              </td>
+              <td class="px-4 py-4">
+                <% dias_semana_lista = [
+                  ['monday', 'Segunda'],
+                  ['tuesday', 'Terça'],
+                  ['wednesday', 'Quarta'],
+                  ['thursday', 'Quinta'],
+                  ['friday', 'Sexta']
+                ] %>
+                <% ah = professional.available_hours.is_a?(Hash) ? professional.available_hours : {} %>
+                <% horarios = dias_semana_lista.map do |dia_key, dia_label|
+                  hs = (ah[dia_key] || [])
+                  hs.any? ? "#{dia_label}: #{hs.join(', ')}" : nil
+                end.compact.join(' | ') %>
+                <%= horarios.presence || '-' %>
+              </td>
+              <td class="px-4 py-4 text-center">
+                <div class="inline-flex items-center gap-2">
+                  <%= check_box_tag "available_this_week_prof_#{professional.id}", 1, professional.available_this_week, data: { professional_id: professional.id }, class: "available-this-week-prof-checkbox h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" %>
+                  <span class="text-green-600 text-xs font-semibold saved-feedback-prof" id="saved-feedback-prof-<%= professional.id %>" style="display:none;">Salvo!</span>
+                </div>
+              </td>
+              <td class="px-4 py-4 text-center">
+                <div class="flex justify-center gap-3">
+                  <%= link_to 'Editar', edit_professional_path(professional), class: 'bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-bold shadow' %>
+                  <%= button_to 'Excluir', professional_path(professional), method: :delete, data: { confirm: 'Tem certeza?' }, class: 'bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-bold shadow' %>
+                </div>
+              </td>
+            </tr>
           <% end %>
         </tbody>
       </table>
@@ -68,3 +73,29 @@
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.available-this-week-prof-checkbox').forEach(function(checkbox) {
+    checkbox.addEventListener('change', function() {
+      const professionalId = this.dataset.professionalId;
+      const checked = this.checked ? 1 : 0;
+      fetch(`/professionals/${professionalId}/available_this_week`, {
+        method: 'PATCH',
+        headers: {
+          'X-CSRF-Token': document.querySelector('meta[name=\'csrf-token\']').content,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ available_this_week: checked })
+      }).then(() => {
+        const feedback = document.getElementById(`saved-feedback-prof-${professionalId}`);
+        if (feedback) {
+          feedback.style.display = 'inline';
+          setTimeout(() => { feedback.style.display = 'none'; }, 1200);
+        }
+      });
+    });
+  });
+});
+</script>

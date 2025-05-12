@@ -15,6 +15,7 @@
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data de Nascimento</th>
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Responsável</th>
+          <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Disponível essa semana</th>
           <th class="px-6 py-3"></th>
         </tr>
       </thead>
@@ -24,6 +25,12 @@
             <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-800"><%= patient.name %></td>
             <td class="px-6 py-4 whitespace-nowrap text-gray-700"><%= l(patient.birthdate, format: :default, locale: :'pt-BR') %></td>
             <td class="px-6 py-4 whitespace-nowrap text-gray-700"><%= patient.responsible.presence || '-' %></td>
+            <td class="px-6 py-4 text-center">
+              <div class="inline-flex items-center gap-2">
+                <%= check_box_tag "available_this_week_#{patient.id}", 1, patient.available_this_week, data: { patient_id: patient.id }, class: "available-this-week-checkbox h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" %>
+                <span class="text-green-600 text-xs font-semibold saved-feedback" id="saved-feedback-<%= patient.id %>" style="display:none;">Salvo!</span>
+              </div>
+            </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <%= link_to "Ver detalhes", patient, class: "bg-white border border-gray-300 rounded px-3 py-1 text-sm font-medium text-gray-900 hover:bg-gray-50" %>
             </td>
@@ -36,3 +43,29 @@
       <%= raw(pagy_bootstrap_nav(@pagy)) %>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.available-this-week-checkbox').forEach(function(checkbox) {
+    checkbox.addEventListener('change', function() {
+      const patientId = this.dataset.patientId;
+      const checked = this.checked ? 1 : 0;
+      fetch(`/patients/${patientId}/available_this_week`, {
+        method: 'PATCH',
+        headers: {
+          'X-CSRF-Token': document.querySelector('meta[name=\'csrf-token\']').content,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ available_this_week: checked })
+      }).then(() => {
+        const feedback = document.getElementById(`saved-feedback-${patientId}`);
+        if (feedback) {
+          feedback.style.display = 'inline';
+          setTimeout(() => { feedback.style.display = 'none'; }, 1200);
+        }
+      });
+    });
+  });
+});
+</script>

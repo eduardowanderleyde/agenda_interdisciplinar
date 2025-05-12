@@ -22,49 +22,115 @@ class SuggestionsController < ApplicationController
 
     @week_days = (Date.today.beginning_of_week..Date.today.end_of_week).to_a
 
-    @hours = ['08:00', '09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00']
+    # Gera horários de 07:00 até 19:00 de 30 em 30 minutos
+    @hours = []
+    (7..18).each do |h|
+      @hours << "%02d:00" % h
+      @hours << "%02d:30" % h
+    end
+    @hours << "19:00"
 
     @suggestions = {}
+    # Montar grade vazia: [dia][hora][sala] = nil
+    grade = {}
+    @week_days.each do |dia|
+      grade[dia] = {}
+      @hours.each do |hora|
+        grade[dia][hora] = {}
+        @rooms.each { |sala| grade[dia][hora][sala.id] = nil }
+      end
+    end
 
-    return unless @selected_patient
+    # Preencher sugestões sem sobreposição
+    Patient.includes(:specialties).where(available_this_week: true).order(:name).each do |patient|
+      patient.specialties.each do |spec|
+        duration = spec.default_duration || 30
+        @week_days.each do |dia|
+          dia_semana = dia.strftime('%A').downcase
+          hora_idx = 0
+          while hora_idx < @hours.length
+            hora = @hours[hora_idx]
+            inicio = Time.zone.parse("#{dia} #{hora}")
+            fim = inicio + duration.minutes
+            break if fim > Time.zone.parse("#{dia} 19:00")
 
-    specialties = @selected_specialty ? [@selected_specialty] : @selected_patient.specialties
-
-    @week_days.each do |day|
-      @suggestions[day] = {}
-      @hours.each do |hour|
-        @suggestions[day][hour] = []
-        @rooms.each do |room|
-          next if @selected_room && room != @selected_room
-
-          # Verifica se a sala está livre
-          sala_livre = Appointment.where(room: room)
-                                  .where('DATE(start_time) = ?', day)
-                                  .where('start_time::time = ?', hour)
-                                  .none?
-
-          # Verifica se o paciente está livre
-          paciente_livre = Appointment.where(patient: @selected_patient)
-                                      .where('DATE(start_time) = ?', day)
-                                      .where('start_time::time = ?', hour)
-                                      .none?
-
-          # Verifica se o profissional está livre e tem a especialidade
-          profissional_livre = specialties.any? do |spec|
-            Professional.joins(:specialties)
-                        .where(specialties: { id: spec.id })
-                        .any? do |prof|
-              prof.available_days.include?(day.strftime('%A').downcase) &&
-                prof.available_hours.include?(hour) &&
-                Appointment.where(professional: prof)
-                           .where('DATE(start_time) = ?', day)
-                           .where('start_time::time = ?', hour)
-                           .none?
+            professionals_disponiveis = Professional.includes(:specialties).select do |prof|
+              prof.specialty_ids.include?(spec.id) &&
+                prof.available_days.include?(dia_semana) &&
+                prof.available_hours[dia_semana]&.any? { |intervalo|
+                  ini, fim_i = intervalo.split(' - ')
+                  ini_t = Time.zone.parse("#{dia} #{ini}")
+                  fim_t = Time.zone.parse("#{dia} #{fim_i}")
+                  inicio >= ini_t && fim <= fim_t
+                }
             end
+            if professionals_disponiveis.any?
+              sala_livre = @rooms.find do |sala|
+                livre = true
+                t = inicio
+                while t < fim
+                  livre &&= grade[dia][t.strftime('%H:%M')][sala.id].nil?
+                  t += 30.minutes
+                end
+                livre
+              end
+              if sala_livre
+                profissional = professionals_disponiveis.find do |prof|
+                  livre = true
+                  t = inicio
+                  while t < fim
+                    livre &&= @rooms.all? { |sala|
+                      ag = grade[dia][t.strftime('%H:%M')][sala.id]
+                      ag.nil? || ag[:professional_id] != prof.id
+                    }
+                    t += 30.minutes
+                  end
+                  livre
+                end
+                if profissional
+                  ocupado = false
+                  t = inicio
+                  while t < fim
+                    ocupado ||= @rooms.any? { |sala|
+                      ag = grade[dia][t.strftime('%H:%M')][sala.id]
+                      ag&.dig(:patient_id) == patient.id
+                    }
+                    t += 30.minutes
+                  end
+                  unless ocupado
+                    t = inicio
+                    while t < fim
+                      if grade[dia][t.strftime('%H:%M')][sala_livre.id].nil?
+                        grade[dia][t.strftime('%H:%M')][sala_livre.id] = {
+                          patient_id: patient.id,
+                          patient_name: patient.name,
+                          professional_id: profissional.id,
+                          professional_name: profissional.name,
+                          specialty: spec.name
+                        }
+                      end
+                      t += 30.minutes
+                    end
+                    hora_idx = @hours.index(fim.strftime('%H:%M')) || (hora_idx + 1)
+                    break
+                  end
+                end
+              end
+            end
+            hora_idx += 1
           end
+        end
+      end
+    end
 
-          # Se a sala, paciente e profissional estiverem livres, adiciona à sugestão
-          @suggestions[day][hour] << room if sala_livre && paciente_livre && profissional_livre
+    # Preencher @suggestions para a view
+    @week_days.each do |dia|
+      @suggestions[dia] = {}
+      @hours.each do |hora|
+        @suggestions[dia][hora] = []
+        @rooms.each do |sala|
+          ag = grade[dia][hora][sala.id]
+          @suggestions[dia][hora] << ag if ag.present?
         end
       end
     end
@@ -118,14 +184,19 @@ class SuggestionsController < ApplicationController
   end
 
   def simulate_schedule
-    # Parâmetros opcionais: data de início da semana
     start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : Date.today.beginning_of_week
     end_date = start_date + 6.days
     week_days = (start_date..end_date).to_a
-    hours = ['08:00', '09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00']
+    # Gera horários de 07:00 até 19:00 de 30 em 30 minutos
+    hours = []
+    (7..18).each do |h|
+      hours << "%02d:00" % h
+      hours << "%02d:30" % h
+    end
+    hours << "19:00"
     rooms = Room.order(:name).to_a
     professionals = Professional.includes(:specialties).to_a
-    patients = Patient.includes(:specialties).to_a
+    patients = Patient.includes(:specialties).where(available_this_week: true).to_a
     specialties = Specialty.all.index_by(&:id)
 
     # Montar grade vazia: [dia][hora][sala] = nil
@@ -141,45 +212,91 @@ class SuggestionsController < ApplicationController
     # Simulação: para cada paciente, tentar encaixar em horários disponíveis com profissional e sala compatíveis
     patients.each do |patient|
       patient.specialties.each do |spec|
+        duration = spec.default_duration || 30
         week_days.each do |dia|
           dia_semana = dia.strftime('%A').downcase
-          hours.each do |hora|
+          hora_idx = 0
+          while hora_idx < hours.length
+            hora = hours[hora_idx]
+            inicio = Time.zone.parse("#{dia} #{hora}")
+            fim = inicio + duration.minutes
+            break if fim > Time.zone.parse("#{dia} 19:00")
+
             professionals_disponiveis = professionals.select do |prof|
               prof.specialty_ids.include?(spec.id) &&
                 prof.available_days.include?(dia_semana) &&
                 prof.available_hours[dia_semana]&.any? { |intervalo|
-                  ini, fim = intervalo.split(' - ')
-                  hora >= ini && hora < fim
+                  ini, fim_i = intervalo.split(' - ')
+                  ini_t = Time.zone.parse("#{dia} #{ini}")
+                  fim_t = Time.zone.parse("#{dia} #{fim_i}")
+                  inicio >= ini_t && fim <= fim_t
                 }
             end
-            next if professionals_disponiveis.empty?
-            sala_livre = rooms.find { |sala| grade[dia][hora][sala.id].nil? }
-            next unless sala_livre
-            profissional = professionals_disponiveis.find do |prof|
-              # Profissional não pode estar ocupado nesse horário/sala
-              rooms.all? { |sala|
-                grade[dia][hora][sala.id].nil? || grade[dia][hora][sala.id][:professional_id] != prof.id
-              }
+            if professionals_disponiveis.any?
+              sala_livre = rooms.find do |sala|
+                # Verifica se a sala está livre durante todo o intervalo
+                livre = true
+                t = inicio
+                while t < fim
+                  livre &&= grade[dia][t.strftime('%H:%M')][sala.id].nil?
+                  t += 30.minutes
+                end
+                livre
+              end
+              if sala_livre
+                profissional = professionals_disponiveis.find do |prof|
+                  # Profissional não pode estar ocupado nesse intervalo em nenhuma sala
+                  livre = true
+                  t = inicio
+                  while t < fim
+                    livre &&= rooms.all? { |sala|
+                      ag = grade[dia][t.strftime('%H:%M')][sala.id]
+                      ag.nil? || ag[:professional_id] != prof.id
+                    }
+                    t += 30.minutes
+                  end
+                  livre
+                end
+                if profissional
+                  # Paciente não pode estar ocupado nesse intervalo em nenhuma sala
+                  ocupado = false
+                  t = inicio
+                  while t < fim
+                    ocupado ||= rooms.any? { |sala|
+                      ag = grade[dia][t.strftime('%H:%M')][sala.id]
+                      ag&.dig(:patient_id) == patient.id
+                    }
+                    t += 30.minutes
+                  end
+                  unless ocupado
+                    # Encaixa!
+                    t = inicio
+                    while t < fim
+                      # Só preenche se o slot ainda estiver livre para a sala
+                      if grade[dia][t.strftime('%H:%M')][sala_livre.id].nil?
+                        grade[dia][t.strftime('%H:%M')][sala_livre.id] = {
+                          patient_id: patient.id,
+                          patient_name: patient.name,
+                          professional_id: profissional.id,
+                          professional_name: profissional.name,
+                          specialty: spec.name
+                        }
+                      end
+                      t += 30.minutes
+                    end
+                    # Após encaixar, pula para o próximo horário livre após o término
+                    hora_idx = hours.index(fim.strftime('%H:%M')) || (hora_idx + 1)
+                    break # Impede múltiplos encaixes no mesmo intervalo/sala
+                  end
+                end
+              end
             end
-            next unless profissional
-            # Paciente não pode estar ocupado nesse horário
-            ocupado = rooms.any? { |sala| grade[dia][hora][sala.id]&.dig(:patient_id) == patient.id }
-            next if ocupado
-            # Encaixa!
-            grade[dia][hora][sala_livre.id] = {
-              patient_id: patient.id,
-              patient_name: patient.name,
-              professional_id: profissional.id,
-              professional_name: profissional.name,
-              specialty: spec.name
-            }
-            break # Só um agendamento por paciente por horário
+            hora_idx += 1
           end
         end
       end
     end
 
-    # Renderizar a grade como partial HTML
     render partial: 'simulacao_grade', locals: { grade: grade, week_days: week_days, hours: hours, rooms: rooms }
   end
 end

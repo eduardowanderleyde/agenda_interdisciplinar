@@ -1,10 +1,10 @@
 class ProfessionalsController < ApplicationController
   before_action :require_admin!
-  before_action :set_professional, only: %i[show edit update destroy schedule available_times]
+  before_action :set_professional, only: %i[show edit update destroy schedule available_times update_available_this_week]
 
   # GET /professionals or /professionals.json
   def index
-    @pagy, @professionals = pagy(Professional.all)
+    @pagy, @professionals = pagy(Professional.order(:name))
   end
 
   # GET /professionals/1 or /professionals/1.json
@@ -115,6 +115,14 @@ class ProfessionalsController < ApplicationController
       Rails.logger.error("Erro em available_times: #{e.message}\n#{e.backtrace.join("\n")}")
       render json: { times: [], error: e.message }, status: :ok
     end
+  end
+
+  # PATCH /professionals/:id/available_this_week
+  def update_available_this_week
+    value = ActiveModel::Type::Boolean.new.cast(params[:available_this_week])
+    Rails.logger.info "PATCH available_this_week: params=#{params[:available_this_week].inspect}, casted=#{value.inspect}"
+    @professional.update(available_this_week: value)
+    head :ok
   end
 
   private
