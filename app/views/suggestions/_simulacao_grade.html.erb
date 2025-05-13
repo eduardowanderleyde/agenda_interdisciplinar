@@ -18,12 +18,12 @@
           <tr>
             <td class="py-4 px-6 border-b bg-blue-50 font-semibold text-blue-900 sticky left-0 z-10 align-middle"><%= hora %></td>
             <% week_days.each do |dia| %>
-              <td class="py-4 px-6 border-b align-top bg-white min-w-[180px]">
+              <td class="py-4 px-6 border-b align-top bg-white min-w-[180px] grade-droppable">
                 <% salas = rooms.select { |sala| grade[dia][hora][sala.id].present? } %>
                 <% if salas.any? %>
                   <% salas.each do |sala| %>
                     <% ag = grade[dia][hora][sala.id] %>
-                    <div class="mb-3 p-3 rounded-xl bg-blue-50 border border-blue-200 text-sm text-center shadow">
+                    <div class="mb-3 p-3 rounded-xl bg-blue-50 border border-blue-200 text-sm text-center shadow grade-card" draggable="true">
                       <div class="font-bold text-blue-800 text-base mb-1">
                         <%= sala.name %> - <%= ag[:specialty] %>
                       </div>
