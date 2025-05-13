@@ -41,7 +41,11 @@ class SuggestionsController < ApplicationController
       end
     end
 
-    # Preencher sugestões sem sobreposição
+    # Hashes auxiliares para ocupação
+    sala_ocupada = Hash.new { |h, k| h[k] = {} } # sala_ocupada[dia][hora][sala_id] = true
+    paciente_ocupado = Hash.new { |h, k| h[k] = {} } # paciente_ocupado[dia][hora][patient_id] = true
+    profissional_ocupado = Hash.new { |h, k| h[k] = {} } # profissional_ocupado[dia][hora][prof_id] = true
+
     Patient.includes(:specialties).where(available_this_week: true).order(:name).each do |patient|
       patient.specialties.each do |spec|
         duration = spec.default_duration || 30
@@ -54,7 +58,7 @@ class SuggestionsController < ApplicationController
             fim = inicio + duration.minutes
             break if fim > Time.zone.parse("#{dia} 19:00")
 
-            professionals_disponiveis = Professional.includes(:specialties).select do |prof|
+            professionals_disponiveis = Professional.includes(:specialties).where(available_this_week: true).select do |prof|
               prof.specialty_ids.include?(spec.id) &&
                 prof.available_days.include?(dia_semana) &&
                 prof.available_hours[dia_semana]&.any? { |intervalo|
@@ -69,20 +73,31 @@ class SuggestionsController < ApplicationController
                 livre = true
                 t = inicio
                 while t < fim
+                  grade[dia][t.strftime('%H:%M')] ||= {}
+                  sala_ocupada[dia][t.strftime('%H:%M')] ||= {}
                   livre &&= grade[dia][t.strftime('%H:%M')][sala.id].nil?
+                  livre &&= !sala_ocupada[dia][t.strftime('%H:%M')][sala.id]
                   t += 30.minutes
                 end
                 livre
               end
               if sala_livre
+                # Marcar todos os slots do intervalo como ocupados para a sala
+                t = inicio
+                while t < fim
+                  sala_ocupada[dia][t.strftime('%H:%M')] ||= {}
+                  sala_ocupada[dia][t.strftime('%H:%M')][sala_livre.id] = true
+                  t += 30.minutes
+                end
                 profissional = professionals_disponiveis.find do |prof|
                   livre = true
                   t = inicio
                   while t < fim
-                    livre &&= @rooms.all? { |sala|
-                      ag = grade[dia][t.strftime('%H:%M')][sala.id]
-                      ag.nil? || ag[:professional_id] != prof.id
-                    }
+                    grade[dia][t.strftime('%H:%M')] ||= {}
+                    sala_ocupada[dia][t.strftime('%H:%M')] ||= {}
+                    paciente_ocupado[dia][t.strftime('%H:%M')] ||= {}
+                    profissional_ocupado[dia][t.strftime('%H:%M')] ||= {}
+                    livre &&= !profissional_ocupado[dia][t.strftime('%H:%M')][prof.id]
                     t += 30.minutes
                   end
                   livre
@@ -91,15 +106,17 @@ class SuggestionsController < ApplicationController
                   ocupado = false
                   t = inicio
                   while t < fim
-                    ocupado ||= @rooms.any? { |sala|
-                      ag = grade[dia][t.strftime('%H:%M')][sala.id]
-                      ag&.dig(:patient_id) == patient.id
-                    }
+                    paciente_ocupado[dia][t.strftime('%H:%M')] ||= {}
+                    ocupado ||= paciente_ocupado[dia][t.strftime('%H:%M')][patient.id]
                     t += 30.minutes
                   end
                   unless ocupado
                     t = inicio
                     while t < fim
+                      grade[dia][t.strftime('%H:%M')] ||= {}
+                      sala_ocupada[dia][t.strftime('%H:%M')] ||= {}
+                      paciente_ocupado[dia][t.strftime('%H:%M')] ||= {}
+                      profissional_ocupado[dia][t.strftime('%H:%M')] ||= {}
                       if grade[dia][t.strftime('%H:%M')][sala_livre.id].nil?
                         grade[dia][t.strftime('%H:%M')][sala_livre.id] = {
                           patient_id: patient.id,
@@ -108,14 +125,26 @@ class SuggestionsController < ApplicationController
                           professional_name: profissional.name,
                           specialty: spec.name
                         }
+                        sala_ocupada[dia][t.strftime('%H:%M')][sala_livre.id] = true
+                        paciente_ocupado[dia][t.strftime('%H:%M')][patient.id] = true
+                        profissional_ocupado[dia][t.strftime('%H:%M')][profissional.id] = true
                       end
                       t += 30.minutes
                     end
-                    hora_idx = @hours.index(fim.strftime('%H:%M')) || (hora_idx + 1)
-                    break
+                    Rails.logger.info "ENCAIXADO: Paciente #{patient.name} (#{spec.name}) em #{dia} #{hora} na sala #{sala_livre.id} com profissional #{profissional.name}"
+                    hora_idx += 1
+                    break # Sai do loop de horários após encaixar para este paciente/especialidade/dia
+                  else
+                    Rails.logger.info "OCUPADO: Paciente #{patient.name} (#{spec.name}) já está ocupado em #{dia} #{hora}"
                   end
+                else
+                  Rails.logger.info "SEM PROFISSIONAL: Paciente #{patient.name} (#{spec.name}) em #{dia} #{hora} - Nenhum profissional disponível"
                 end
+              else
+                Rails.logger.info "SEM SALA: Paciente #{patient.name} (#{spec.name}) em #{dia} #{hora} - Nenhuma sala livre"
               end
+            else
+              Rails.logger.info "SEM PROFISSIONAL DISPONÍVEL: Paciente #{patient.name} (#{spec.name}) em #{dia} #{hora} - Nenhum profissional disponível no horário"
             end
             hora_idx += 1
           end
@@ -131,6 +160,10 @@ class SuggestionsController < ApplicationController
         @rooms.each do |sala|
           ag = grade[dia][hora][sala.id]
           @suggestions[dia][hora] << ag if ag.present?
+        end
+        # Log de verificação de sobreposição
+        if @suggestions[dia][hora].size > 1
+          Rails.logger.info "SOBREPOSIÇÃO: #{dia} #{hora} - #{@suggestions[dia][hora].size} agendamentos na mesma sala"
         end
       end
     end
@@ -195,9 +228,14 @@ class SuggestionsController < ApplicationController
     end
     hours << "19:00"
     rooms = Room.order(:name).to_a
-    professionals = Professional.includes(:specialties).to_a
+    professionals = Professional.includes(:specialties).where(available_this_week: true).to_a
     patients = Patient.includes(:specialties).where(available_this_week: true).to_a
     specialties = Specialty.all.index_by(&:id)
+
+    # Hashes auxiliares para ocupação
+    sala_ocupada = Hash.new { |h, k| h[k] = {} }
+    paciente_ocupado = Hash.new { |h, k| h[k] = {} }
+    profissional_ocupado = Hash.new { |h, k| h[k] = {} }
 
     # Montar grade vazia: [dia][hora][sala] = nil
     grade = {}
@@ -234,45 +272,53 @@ class SuggestionsController < ApplicationController
             end
             if professionals_disponiveis.any?
               sala_livre = rooms.find do |sala|
-                # Verifica se a sala está livre durante todo o intervalo
                 livre = true
                 t = inicio
                 while t < fim
+                  grade[dia][t.strftime('%H:%M')] ||= {}
+                  sala_ocupada[dia][t.strftime('%H:%M')] ||= {}
                   livre &&= grade[dia][t.strftime('%H:%M')][sala.id].nil?
+                  livre &&= !sala_ocupada[dia][t.strftime('%H:%M')][sala.id]
                   t += 30.minutes
                 end
                 livre
               end
               if sala_livre
+                # Marcar todos os slots do intervalo como ocupados para a sala
+                t = inicio
+                while t < fim
+                  sala_ocupada[dia][t.strftime('%H:%M')] ||= {}
+                  sala_ocupada[dia][t.strftime('%H:%M')][sala_livre.id] = true
+                  t += 30.minutes
+                end
                 profissional = professionals_disponiveis.find do |prof|
-                  # Profissional não pode estar ocupado nesse intervalo em nenhuma sala
                   livre = true
                   t = inicio
                   while t < fim
-                    livre &&= rooms.all? { |sala|
-                      ag = grade[dia][t.strftime('%H:%M')][sala.id]
-                      ag.nil? || ag[:professional_id] != prof.id
-                    }
+                    grade[dia][t.strftime('%H:%M')] ||= {}
+                    sala_ocupada[dia][t.strftime('%H:%M')] ||= {}
+                    paciente_ocupado[dia][t.strftime('%H:%M')] ||= {}
+                    profissional_ocupado[dia][t.strftime('%H:%M')] ||= {}
+                    livre &&= !profissional_ocupado[dia][t.strftime('%H:%M')][prof.id]
                     t += 30.minutes
                   end
                   livre
                 end
                 if profissional
-                  # Paciente não pode estar ocupado nesse intervalo em nenhuma sala
                   ocupado = false
                   t = inicio
                   while t < fim
-                    ocupado ||= rooms.any? { |sala|
-                      ag = grade[dia][t.strftime('%H:%M')][sala.id]
-                      ag&.dig(:patient_id) == patient.id
-                    }
+                    paciente_ocupado[dia][t.strftime('%H:%M')] ||= {}
+                    ocupado ||= paciente_ocupado[dia][t.strftime('%H:%M')][patient.id]
                     t += 30.minutes
                   end
                   unless ocupado
-                    # Encaixa!
                     t = inicio
                     while t < fim
-                      # Só preenche se o slot ainda estiver livre para a sala
+                      grade[dia][t.strftime('%H:%M')] ||= {}
+                      sala_ocupada[dia][t.strftime('%H:%M')] ||= {}
+                      paciente_ocupado[dia][t.strftime('%H:%M')] ||= {}
+                      profissional_ocupado[dia][t.strftime('%H:%M')] ||= {}
                       if grade[dia][t.strftime('%H:%M')][sala_livre.id].nil?
                         grade[dia][t.strftime('%H:%M')][sala_livre.id] = {
                           patient_id: patient.id,
@@ -281,15 +327,26 @@ class SuggestionsController < ApplicationController
                           professional_name: profissional.name,
                           specialty: spec.name
                         }
+                        sala_ocupada[dia][t.strftime('%H:%M')][sala_livre.id] = true
+                        paciente_ocupado[dia][t.strftime('%H:%M')][patient.id] = true
+                        profissional_ocupado[dia][t.strftime('%H:%M')][profissional.id] = true
                       end
                       t += 30.minutes
                     end
-                    # Após encaixar, pula para o próximo horário livre após o término
-                    hora_idx = hours.index(fim.strftime('%H:%M')) || (hora_idx + 1)
-                    break # Impede múltiplos encaixes no mesmo intervalo/sala
+                    Rails.logger.info "ENCAIXADO: Paciente #{patient.name} (#{spec.name}) em #{dia} #{hora} na sala #{sala_livre.id} com profissional #{profissional.name}"
+                    hora_idx += 1
+                    break # Sai do loop de horários após encaixar para este paciente/especialidade/dia
+                  else
+                    Rails.logger.info "OCUPADO: Paciente #{patient.name} (#{spec.name}) já está ocupado em #{dia} #{hora}"
                   end
+                else
+                  Rails.logger.info "SEM PROFISSIONAL: Paciente #{patient.name} (#{spec.name}) em #{dia} #{hora} - Nenhum profissional disponível"
                 end
+              else
+                Rails.logger.info "SEM SALA: Paciente #{patient.name} (#{spec.name}) em #{dia} #{hora} - Nenhuma sala livre"
               end
+            else
+              Rails.logger.info "SEM PROFISSIONAL DISPONÍVEL: Paciente #{patient.name} (#{spec.name}) em #{dia} #{hora} - Nenhum profissional disponível no horário"
             end
             hora_idx += 1
           end

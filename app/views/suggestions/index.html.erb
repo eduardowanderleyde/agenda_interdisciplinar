@@ -1,12 +1,14 @@
-<div class="w-full px-0">
-  <!-- Metade de cima: Sugestões para o paciente -->
+<div class="min-h-screen bg-gradient-to-br from-indigo-700 via-purple-600 to-pink-400 py-12 px-4">
   <!-- BLOCO REMOVIDO: Sugestões de Horários por Paciente -->
 
-  <!-- Metade de baixo: Sugestões para profissionais -->
+  <!-- Sugestões para profissionais -->
   <div class="w-full" data-controller="suggestion">
     <div class="flex flex-wrap gap-4 items-end mb-8 justify-between w-full">
-      <h2 class="text-2xl font-bold mb-4 text-gray-900 text-center w-full">Sugestões de Pacientes por Profissional</h2>
-      <button id="btn-simular-horario" class="btn btn-primary" style="height: 3rem; min-width: 220px; font-size: 1.1rem;">Fazer o horário da semana</button>
+      <h2 class="text-3xl font-extrabold text-white text-center w-full drop-shadow mb-6">Sugestões de Pacientes por Profissional</h2>
+      <button id="btn-simular-horario"
+        class="bg-indigo-600 text-white px-6 py-3 rounded-lg shadow-md hover:bg-indigo-700 transition text-lg font-semibold">
+        Fazer o horário da semana
+      </button>
     </div>
     <div id="simulacao-horario-semanal" class="mb-8 w-full">
       <!-- A grade simulada será exibida aqui -->

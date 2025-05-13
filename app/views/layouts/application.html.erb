@@ -14,10 +14,10 @@
 
   </head>
 
-  <body>
+  <body class="bg-gradient-to-br from-primary via-secondary to-fundo min-h-screen">
     <% unless devise_controller? %>
       <%= render NavigationComponent.new %>
-      <main class="container mx-auto px-4 py-8">
+      <main>
         <% if notice %>
           <div class="alert alert-success">
             <%= sanitize(notice) %>

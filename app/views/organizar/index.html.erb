@@ -1,78 +1,81 @@
 <% dias = params[:start_date].present? ? (0..6).map { |i| Date.parse(params[:start_date]) + i.days } : [] %>
 
-<!-- Cabeçalho do planner: seletor de semana + título -->
-<div class="planner-header" style="display: flex; align-items: flex-end; gap: 2rem; margin-bottom: 2.5rem; flex-wrap: wrap;">
-  <%= form_with url: organizar_path, method: :get, local: true, html: { id: 'data-select-form', style: 'display: flex; gap: 1.5rem; align-items: flex-end; flex-wrap: wrap; margin: 0; padding: 0;' } do |f| %>
-    <div>
-      <label for="start_date" style="font-size:1.1rem; font-weight:600; color:#1e293b; margin-bottom:0.3rem; display:block;">Semana</label>
-      <%= f.date_field :start_date, class: "border rounded p-3 text-lg text-gray-800", value: params[:start_date] || Date.current.strftime('%Y-%m-%d'), style: 'min-width:180px; max-width:350px; width:100%;' %>
-    </div>
-    <div>
-      <label style="display:block; height:1.1rem;"></label>
-      <%= f.submit "Selecionar", class: "bg-indigo-600 text-white px-8 py-3 rounded hover:bg-indigo-700 font-semibold shadow text-lg", style: 'min-width:160px; max-width:300px; width:100%;' %>
-    </div>
-  <% end %>
-  <h2 class="text-3xl font-bold text-indigo-700" style="margin:0;">Planner Semanal por Sala</h2>
-</div>
+<div class="min-h-screen bg-gradient-to-br from-indigo-700 via-purple-600 to-blue-400 py-12 px-4">
+  <div class="max-w-7xl mx-auto space-y-12">
 
-<div class="planner-full">
-  <% if dias.any? %>
-    <% horarios = (8..17).flat_map { |h| ["%02d:00" % h, "%02d:30" % h] } + ["18:00"] %>
-    <% @rooms.each_with_index do |sala, idx| %>
-      <div class="mb-10">
-        <h3 class="text-2xl font-extrabold mb-4 text-green-700 uppercase tracking-wide">SALA <%= idx+1 %></h3>
-        <div style="overflow-x:auto;">
-          <table class="w-full table-fixed border-collapse bg-white rounded shadow overflow-hidden text-base">
-            <thead>
-              <tr>
-                <th class="border p-4 bg-green-200 text-center">Horário</th>
-                <% dias.each do |dia| %>
-                  <th class="border p-4 bg-green-200 text-center">
-                    <div class="font-bold text-indigo-800 text-base">
-                      <%= I18n.l(dia, format: '%A', locale: :'pt-BR') %><br><%= dia.strftime('%d/%m') %>
-                    </div>
-                  </th>
-                <% end %>
-              </tr>
-            </thead>
-            <tbody>
-              <% horarios.each do |hora| %>
+    <!-- Cabeçalho: Seletor de semana -->
+    <div class="flex flex-wrap gap-6 items-end justify-between">
+      <%= form_with url: organizar_path, method: :get, local: true, html: { class: "flex flex-wrap gap-4 items-end" } do |f| %>
+        <div>
+          <label for="start_date" class="block text-white font-semibold text-lg mb-1">Semana</label>
+          <%= f.date_field :start_date, class: "rounded-xl p-3 text-base bg-white/90 text-gray-800 shadow-inner", value: params[:start_date] || Date.current.strftime('%Y-%m-%d') %>
+        </div>
+        <div>
+          <label class="block h-5"></label>
+          <%= f.submit "Selecionar", class: "bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold shadow hover:bg-indigo-700 transition text-lg" %>
+        </div>
+      <% end %>
+      <h2 class="text-3xl font-bold text-white drop-shadow">Planner Semanal por Sala</h2>
+    </div>
+
+    <!-- Tabelas -->
+    <% if dias.any? %>
+      <% horarios = (8..17).flat_map { |h| ["%02d:00" % h, "%02d:30" % h] } + ["18:00"] %>
+      <% @rooms.each_with_index do |sala, idx| %>
+        <div class="space-y-6">
+          <h3 class="text-2xl font-extrabold text-center text-green-200 uppercase tracking-wide bg-white/10 py-2 rounded-xl shadow">SALA <%= idx+1 %></h3>
+
+          <div class="overflow-x-auto bg-white/30 rounded-2xl shadow-2xl backdrop-blur-md border border-white/20">
+            <table class="w-full table-fixed text-sm text-white">
+              <thead>
                 <tr>
-                  <td class="border p-2 font-semibold bg-green-50 text-center text-gray-700"><%= hora %></td>
+                  <th class="border border-white/10 p-4 bg-green-300 text-gray-900 text-center font-semibold">Horário</th>
                   <% dias.each do |dia| %>
-                    <% ag = @appointments.find { |a| a.room_id == sala.id && a.start_time.to_date == dia && a.start_time.strftime('%H:%M') == hora } %>
-                    <td class="border align-top p-2">
-                      <% if ag %>
-                        <div class="p-3 rounded-lg bg-indigo-50 border text-sm text-center shadow-sm">
-                          <div class="font-bold text-indigo-800 text-sm">
-                            <%= ag.start_time.strftime('%H:%M') %>
-                          </div>
-                          <div class="text-gray-700">Paciente: <%= ag.patient&.name %></div>
-                          <div class="text-gray-700">Profissional: <%= ag.professional&.name %></div>
-                          <% if ag.specialty.present? %>
-                            <div class="text-indigo-600 mt-1">(<%= ag.specialty.name %>)</div>
-                          <% end %>
-                        </div>
-                      <% else %>
-                        <button
-                          type="button"
-                          class="text-gray-500 text-sm flex justify-center items-center h-16 w-full hover:bg-indigo-50 transition rounded"
-                          data-controller="planner"
-                          data-action="click->planner#open"
-                          data-planner-room="<%= sala.id %>"
-                          data-planner-date="<%= dia %>"
-                          data-planner-time="<%= hora %>">
-                          Livre
-                        </button>
-                      <% end %>
-                    </td>
+                    <th class="border border-white/10 p-4 bg-green-300 text-gray-900 text-center font-semibold">
+                      <div>
+                        <%= I18n.l(dia, format: '%A', locale: :'pt-BR') %><br><%= dia.strftime('%d/%m') %>
+                      </div>
+                    </th>
                   <% end %>
                 </tr>
-              <% end %>
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                <% horarios.each do |hora| %>
+                  <tr>
+                    <td class="border border-white/10 bg-green-100 text-gray-700 font-bold text-center p-2"><%= hora %></td>
+                    <% dias.each do |dia| %>
+                      <% ag = @appointments.find { |a| a.room_id == sala.id && a.start_time.to_date == dia && a.start_time.strftime('%H:%M') == hora } %>
+                      <td class="border border-white/10 p-2 text-center align-top">
+                        <% if ag %>
+                          <div class="p-3 bg-indigo-100 text-gray-800 rounded-xl shadow-sm text-sm space-y-1">
+                            <div class="font-bold text-indigo-700"><%= ag.start_time.strftime('%H:%M') %></div>
+                            <div>Paciente: <%= ag.patient&.name %></div>
+                            <div>Profissional: <%= ag.professional&.name %></div>
+                            <% if ag.specialty.present? %>
+                              <div class="text-indigo-600 italic">(<%= ag.specialty.name %>)</div>
+                            <% end %>
+                          </div>
+                        <% else %>
+                          <button
+                            type="button"
+                            class="text-indigo-100 text-sm h-16 w-full hover:bg-indigo-500 hover:text-white transition rounded"
+                            data-controller="planner"
+                            data-action="click->planner#open"
+                            data-planner-room="<%= sala.id %>"
+                            data-planner-date="<%= dia %>"
+                            data-planner-time="<%= hora %>">
+                            Livre
+                          </button>
+                        <% end %>
+                      </td>
+                    <% end %>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      <% end %>
     <% end %>
-  <% end %>
+  </div>
 </div>

@@ -1,9 +1,8 @@
-<div style="background-color: #f9fafb; min-height: 100vh; padding-top: 40px; padding-bottom: 40px;">
-  <div class="max-w-xl mx-auto p-8 bg-white rounded shadow">
-    <h1 class="text-3xl font-bold mb-8 text-indigo-700">Novo Agendamento</h1>
+<main class="min-h-screen bg-gradient-to-br from-indigo-700 via-purple-600 to-pink-400 py-16 px-4 flex justify-center items-start">
+  <div>
     <%= render 'form', appointment: @appointment %>
     <div class="mt-8 text-center">
-      <%= link_to 'Voltar para agendamentos', appointments_path, class: 'text-indigo-600 hover:underline text-lg' %>
+      <%= link_to 'Voltar para agendamentos', appointments_path, class: 'text-white hover:underline text-lg font-semibold' %>
     </div>
   </div>
-</div>
+</main>

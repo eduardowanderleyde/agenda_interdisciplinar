@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import Sortable from 'sortablejs';
 
 export default class extends Controller {
   static targets = ["paciente", "dia", "horario", "especialidade", "buscar", "sugestoes"]
@@ -19,10 +20,75 @@ export default class extends Controller {
         .then(r => r.text())
         .then(html => {
           simulacaoDiv.innerHTML = html;
+          this.initDragAndDrop();
         })
         .catch(() => {
           simulacaoDiv.innerHTML = '<div class="text-red-600">Erro ao simular a semana.</div>';
         });
+    }
+  }
+
+  initDragAndDrop() {
+    document.querySelectorAll('.grade-droppable').forEach(cell => {
+      Sortable.create(cell, {
+        group: 'grade',
+        animation: 150,
+        filter: '.livre',
+        onAdd: evt => {
+          // Limpa completamente a célula de destino antes de inserir o card
+          const card = evt.item;
+          cell.innerHTML = '';
+          cell.appendChild(card);
+          if (cell.querySelectorAll('.grade-card').length > 1) {
+            evt.from.appendChild(evt.item);
+            return;
+          }
+          // Atualiza os atributos data-dia, data-horario e data-sala do card
+          const td = card.closest('td');
+          if (td) {
+            // Descobrir dia e horário pela posição da célula na tabela
+            const tr = td.parentElement;
+            const table = td.closest('table');
+            const rowIdx = Array.from(table.rows).indexOf(tr);
+            const colIdx = Array.from(tr.children).indexOf(td);
+            // Pega o horário pela primeira coluna
+            const hora = tr.children[0]?.innerText.trim();
+            // Pega o dia pelo cabeçalho
+            const ths = table.querySelectorAll('thead th');
+            const dia = ths[colIdx]?.innerText.trim();
+            card.setAttribute('data-dia', dia);
+            card.setAttribute('data-horario', hora);
+            // Sala pelo texto do card
+            const salaNome = card.querySelector('.font-bold')?.innerText.split(' - ')[0]?.trim();
+            card.setAttribute('data-sala', salaNome);
+          }
+          if (evt.from.querySelectorAll('.grade-card').length === 0) {
+            // Limpa a célula antes de adicionar 'Livre'
+            evt.from.innerHTML = '';
+            const span = document.createElement('span');
+            span.className = 'text-gray-300 font-semibold livre';
+            span.innerText = 'Livre';
+            evt.from.appendChild(span);
+          }
+        }
+      });
+    });
+    // Botão salvar alterações
+    const btnSalvar = document.getElementById('btn-salvar-alteracoes');
+    if (btnSalvar) {
+      btnSalvar.onclick = () => {
+        const cards = document.querySelectorAll('.grade-card');
+        const dados = Array.from(cards).map(card => ({
+          dia: card.getAttribute('data-dia'),
+          horario: card.getAttribute('data-horario'),
+          sala: card.getAttribute('data-sala'),
+          paciente: card.querySelector('.text-gray-700.mb-1')?.innerText.replace('Paciente: ', ''),
+          profissional: card.querySelector('.text-gray-700:not(.mb-1)')?.innerText.replace('Profissional: ', ''),
+          especialidade: card.querySelector('.font-bold')?.innerText.split(' - ')[1]?.trim()
+        }));
+        console.log('Grade para salvar:', dados);
+        // Aqui pode ser feito um fetch/AJAX para enviar ao backend
+      };
     }
   }
 

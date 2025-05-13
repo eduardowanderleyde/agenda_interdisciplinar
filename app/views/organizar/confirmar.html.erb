@@ -1,56 +1,63 @@
-<div class="max-w-3xl mx-auto mt-10 p-6 bg-white rounded shadow">
-  <h1 class="text-2xl font-bold mb-4 text-indigo-700">Confirmar Agenda</h1>
-  <p class="mb-4">Confira os agendamentos que serão criados. Conflitos serão destacados em vermelho.</p>
+<div class="min-h-screen bg-gradient-to-br from-indigo-700 via-purple-600 to-blue-400 py-12 px-4">
+  <div class="max-w-4xl mx-auto p-8 bg-white/30 rounded-3xl shadow-2xl backdrop-blur-md border border-white/20">
+    <h1 class="text-3xl font-bold mb-8 text-white text-center drop-shadow">Confirmar Agenda</h1>
+    <p class="mb-6 text-white text-center">Confira os agendamentos que serão criados. Conflitos serão destacados em vermelho.</p>
 
-  <table class="w-full text-sm mb-4">
-    <thead>
-      <tr class="border-b">
-        <th class="text-left">Sala</th>
-        <th class="text-left">Profissional</th>
-        <th class="text-left">Paciente</th>
-        <th class="text-left">Início</th>
-        <th class="text-left">Fim</th>
-        <th class="text-left">Conflito</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @agenda["slots"].each do |slot| %>
-        <% conflito = @conflitos.find { |c| c[:slot] == slot } %>
-        <tr class="<%= conflito ? 'bg-red-100' : '' %>">
-          <td><%= slot["sala"] %></td>
-          <td><%= slot["profissional"] %></td>
-          <td><%= slot["paciente"] %></td>
-          <td><%= slot["inicio"] %></td>
-          <td><%= slot["fim"] %></td>
-          <td>
-            <% if conflito %>
-              <span class="text-red-600 font-semibold">Conflito:
-                <% if conflito[:prof_conflict] %>Profissional <% end %>
-                <% if conflito[:room_conflict] %>Sala<% end %>
-              </span>
-            <% else %>
-              <span class="text-green-600">OK</span>
-            <% end %>
-          </td>
+    <table class="w-full text-sm text-white mb-8 bg-white/20 rounded-xl overflow-hidden backdrop-blur-md">
+      <thead>
+        <tr class="border-b border-white/20">
+          <th class="text-left p-2">Sala</th>
+          <th class="text-left p-2">Profissional</th>
+          <th class="text-left p-2">Paciente</th>
+          <th class="text-left p-2">Início</th>
+          <th class="text-left p-2">Fim</th>
+          <th class="text-left p-2">Conflito</th>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        <% @agenda["slots"].each do |slot| %>
+          <% conflito = @conflitos.find { |c| c[:slot] == slot } %>
+          <tr class="<%= conflito ? 'bg-red-200/80 text-red-800' : 'bg-white/10' %>">
+            <td class="p-2"><%= slot["sala"] %></td>
+            <td class="p-2"><%= slot["profissional"] %></td>
+            <td class="p-2"><%= slot["paciente"] %></td>
+            <td class="p-2"><%= slot["inicio"] %></td>
+            <td class="p-2"><%= slot["fim"] %></td>
+            <td class="p-2">
+              <% if conflito %>
+                <span class="font-semibold">
+                  Conflito:
+                  <% if conflito[:prof_conflict] %>Profissional <% end %>
+                  <% if conflito[:room_conflict] %>Sala<% end %>
+                </span>
+              <% else %>
+                <span class="text-green-200">OK</span>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
 
-  <% if @conflitos.any? %>
-    <div class="mb-4 p-2 bg-red-200 text-red-800 rounded">
-      Existem conflitos! Ajuste a agenda ou escolha outra opção.
-    </div>
-  <% else %>
-    <%= form_with url: escolher_agenda_path, method: :post, local: true do |f| %>
-      <%= hidden_field_tag :agenda, @agenda.to_json %>
-      <div class="mb-4">
-        <%= f.label :notes, "Observação geral para esta agenda", class: "block font-semibold mb-1" %>
-        <%= f.text_area :notes, rows: 2, class: "border rounded p-2 w-full" %>
+    <% if @conflitos.any? %>
+      <div class="mb-6 p-4 bg-red-500/70 text-white rounded-lg font-semibold text-center">
+        Existem conflitos! Ajuste a agenda ou escolha outra opção.
       </div>
-      <%= f.submit "Confirmar e Salvar Agenda", class: "bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" %>
+    <% else %>
+      <%= form_with url: escolher_agenda_path, method: :post, local: true do |f| %>
+        <%= hidden_field_tag :agenda, @agenda.to_json %>
+        <div class="mb-6">
+          <%= f.label :notes, "Observação geral para esta agenda", class: "block font-semibold text-white mb-2" %>
+          <%= f.text_area :notes, rows: 2, class: "w-full rounded-xl p-3 bg-white/80 text-gray-800 focus:ring-2 focus:ring-indigo-500" %>
+        </div>
+        <div class="text-center">
+          <%= f.submit "Confirmar e Salvar Agenda", class: "bg-green-600 text-white px-8 py-4 rounded-xl hover:bg-green-700 text-lg font-bold shadow transition" %>
+        </div>
+      <% end %>
     <% end %>
-  <% end %>
 
-  <%= link_to "Voltar", organizar_path, class: "text-indigo-600 hover:underline" %>
-</div> 
+    <div class="mt-6 text-center">
+      <%= link_to "Voltar", organizar_path, class: "text-white underline hover:text-indigo-200 text-lg" %>
+    </div>
+  </div>
+</div>

@@ -86,27 +86,27 @@ nomes_pacientes.each_with_index do |nome, idx|
   )
 end
 
-# Poucos agendamentos para facilitar organização automática
-Appointment.destroy_all
-3.times do
-  patient = Patient.order('RANDOM()').first
-  professional = Professional.order('RANDOM()').first
-  room = Room.order('RANDOM()').first
-  day = Faker::Date.between(from: 2.days.ago, to: 2.days.from_now)
-  hour = [8, 9, 10, 14, 15, 16].sample
-  start_time = Time.zone.local(day.year, day.month, day.day, hour, [0, 30].sample)
-  duration = [30, 45, 60].sample
-  Appointment.create!(
-    patient: patient,
-    professional: professional,
-    room: room,
-    start_time: start_time,
-    duration: duration,
-    status: %w[agendado realizado cancelado].sample,
-    notes: Faker::Lorem.sentence(word_count: 6),
-    specialty: patient.specialties.sample
-  )
-end
+## Poucos agendamentos para facilitar organização automática
+# Appointment.destroy_all
+# 3.times do
+#   patient = Patient.order('RANDOM()').first
+#   professional = Professional.order('RANDOM()').first
+#   room = Room.order('RANDOM()').first
+#   day = Faker::Date.between(from: 2.days.ago, to: 2.days.from_now)
+#   hour = [8, 9, 10, 14, 15, 16].sample
+#   start_time = Time.zone.local(day.year, day.month, day.day, hour, [0, 30].sample)
+#   duration = [30, 45, 60].sample
+#   Appointment.create!(
+#     patient: patient,
+#     professional: professional,
+#     room: room,
+#     start_time: start_time,
+#     duration: duration,
+#     status: %w[agendado realizado cancelado].sample,
+#     notes: Faker::Lorem.sentence(word_count: 6),
+#     specialty: patient.specialties.sample
+#   )
+# end
 
 # Usuário admin
 User.find_or_create_by!(email: 'admin@example.com') do |user|
