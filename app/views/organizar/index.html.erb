@@ -1,7 +1,48 @@
 <% dias = params[:start_date].present? ? (0..6).map { |i| Date.parse(params[:start_date]) + i.days } : [] %>
 
-<div class="min-h-screen bg-gradient-to-br from-indigo-700 via-purple-600 to-blue-400 py-12 px-4">
+<div class="min-h-screen bg-gradient-to-br from-indigo-700 via-purple-600 to-blue-400 py-12 px-4" data-controller="organizar">
   <div class="max-w-7xl mx-auto space-y-12">
+
+    <!-- Formulário de busca de disponibilidade Paciente-Profissional -->
+    <div class="bg-white rounded-2xl shadow-xl p-6 mb-2 max-w-xl mx-auto">
+      <h2 class="text-2xl font-extrabold text-center mb-4 text-indigo-800">Buscar disponibilidade Paciente-Profissional</h2>
+      <%= form_with url: organizar_path, method: :get, local: true, html: { class: "space-y-4 flex flex-col items-center" } do |f| %>
+        <div class="w-full">
+          <label for="patient_id" class="block font-semibold mb-1 text-indigo-700">Selecione o paciente</label>
+          <%= f.collection_select :patient_id, Patient.order(:name), :id, :name, {prompt: "Selecione"}, class: "w-full rounded-xl p-3 border border-gray-300" %>
+        </div>
+        <div class="w-full">
+          <label for="start_date" class="block font-semibold mb-1 text-indigo-700">Data desejada</label>
+          <%= f.date_field :start_date, class: "w-full rounded-xl p-3 border border-gray-300", value: params[:start_date] || Date.current.strftime('%Y-%m-%d') %>
+        </div>
+        <div class="w-full flex justify-center">
+          <%= f.submit "Buscar disponibilidade", class: "bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow hover:bg-indigo-700 transition" %>
+        </div>
+      <% end %>
+      <% if params[:patient_id].present? && params[:start_date].present? %>
+        <div class="text-center text-lg text-red-600 font-bold mt-4 mb-2 bg-yellow-100 rounded-xl p-4 border border-yellow-300 shadow">
+          <% if @profissionais_disponiveis.present? && @profissionais_disponiveis.empty? %>
+            Não achamos profissionais disponíveis para este paciente/data.<br>
+            Procuramos em <%= @total_profissionais_checados || 0 %> profissionais.
+          <% elsif @profissionais_disponiveis.present? %>
+            Encontramos <%= @profissionais_disponiveis.size %> profissionais disponíveis em <%= @total_profissionais_checados %> profissionais checados.
+          <% else %>
+            Não achamos profissionais disponíveis para este paciente/data.<br>
+            Procuramos em <%= @total_profissionais_checados || 0 %> profissionais.
+          <% end %>
+          <% if @profissionais_disponiveis.present? && @profissionais_disponiveis.any? %>
+            <div class="mt-2 text-base text-indigo-900 font-semibold">
+              Profissionais disponíveis:<br>
+              <ul class="list-disc list-inside mt-1">
+                <% @profissionais_disponiveis.each do |prof| %>
+                  <li><%= prof.name %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
 
     <!-- Cabeçalho: Seletor de semana -->
     <div class="flex flex-wrap gap-6 items-end justify-between">
@@ -15,67 +56,56 @@
           <%= f.submit "Selecionar", class: "bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold shadow hover:bg-indigo-700 transition text-lg" %>
         </div>
       <% end %>
-      <h2 class="text-3xl font-bold text-white drop-shadow">Planner Semanal por Sala</h2>
+      <h2 class="text-3xl font-bold text-white drop-shadow">HORÁRIO OFICIAL - Planner Semanal por Sala</h2>
     </div>
 
     <!-- Tabelas -->
     <% if dias.any? %>
-      <% horarios = (8..17).flat_map { |h| ["%02d:00" % h, "%02d:30" % h] } + ["18:00"] %>
+      <% horarios = []; t = Time.zone.parse('07:00'); while t <= Time.zone.parse('19:00'); horarios << t.strftime('%H:%M'); t += 15.minutes; end %>
       <% @rooms.each_with_index do |sala, idx| %>
         <div class="space-y-6">
-          <h3 class="text-2xl font-extrabold text-center text-green-200 uppercase tracking-wide bg-white/10 py-2 rounded-xl shadow">SALA <%= idx+1 %></h3>
-
-          <div class="overflow-x-auto bg-white/30 rounded-2xl shadow-2xl backdrop-blur-md border border-white/20">
-            <table class="w-full table-fixed text-sm text-white">
-              <thead>
-                <tr>
-                  <th class="border border-white/10 p-4 bg-green-300 text-gray-900 text-center font-semibold">Horário</th>
-                  <% dias.each do |dia| %>
-                    <th class="border border-white/10 p-4 bg-green-300 text-gray-900 text-center font-semibold">
-                      <div>
-                        <%= I18n.l(dia, format: '%A', locale: :'pt-BR') %><br><%= dia.strftime('%d/%m') %>
-                      </div>
-                    </th>
-                  <% end %>
-                </tr>
-              </thead>
-              <tbody>
-                <% horarios.each do |hora| %>
-                  <tr>
-                    <td class="border border-white/10 bg-green-100 text-gray-700 font-bold text-center p-2"><%= hora %></td>
-                    <% dias.each do |dia| %>
-                      <% ag = @appointments.find { |a| a.room_id == sala.id && a.start_time.to_date == dia && a.start_time.strftime('%H:%M') == hora } %>
-                      <td class="border border-white/10 p-2 text-center align-top">
-                        <% if ag %>
-                          <div class="p-3 bg-indigo-100 text-gray-800 rounded-xl shadow-sm text-sm space-y-1">
-                            <div class="font-bold text-indigo-700"><%= ag.start_time.strftime('%H:%M') %></div>
-                            <div>Paciente: <%= ag.patient&.name %></div>
-                            <div>Profissional: <%= ag.professional&.name %></div>
-                            <% if ag.specialty.present? %>
-                              <div class="text-indigo-600 italic">(<%= ag.specialty.name %>)</div>
-                            <% end %>
-                          </div>
-                        <% else %>
-                          <button
-                            type="button"
-                            class="text-indigo-100 text-sm h-16 w-full hover:bg-indigo-500 hover:text-white transition rounded"
-                            data-controller="planner"
-                            data-action="click->planner#open"
-                            data-planner-room="<%= sala.id %>"
-                            data-planner-date="<%= dia %>"
-                            data-planner-time="<%= hora %>">
-                            Livre
-                          </button>
-                        <% end %>
-                      </td>
-                    <% end %>
-                  </tr>
-                <% end %>
-              </tbody>
-            </table>
-          </div>
+          <h3 class="text-2xl font-extrabold text-center text-green-200 uppercase tracking-wide bg-white/10 py-2 rounded-xl shadow">SALA <%= sala.name %></h3>
+          <%= render partial: 'suggestions/simulacao_grade', locals: {
+            grade: @grades_por_sala[sala.id],
+            week_days: dias,
+            hours: horarios,
+            rooms: [sala],
+            tabela_tipo: 'atual',
+            selected_room: sala
+          } %>
         </div>
       <% end %>
+    <% end %>
+  </div>
+</div>
+
+<!-- Modal de Adicionar Agendamento -->
+<div data-controller="planner" data-planner-target="modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl p-8 shadow-xl w-full max-w-md relative">
+    <button type="button" class="absolute top-2 right-2 text-gray-400 hover:text-red-600 text-2xl" data-action="click->planner#close">&times;</button>
+    <h2 class="text-xl font-bold mb-4 text-indigo-700">Adicionar Agendamento</h2>
+    <%= form_with url: appointments_path, method: :post, local: true do |f| %>
+      <%= f.hidden_field :room_id, data: { planner_target: "roomId" } %>
+      <div class="mb-4">
+        <%= f.label :start_time, "Data e Hora", class: "block font-semibold mb-1" %>
+        <%= f.text_field :start_time, class: "w-full rounded p-2 border", data: { planner_target: "startTime" } %>
+      </div>
+      <!-- Campos adicionais -->
+      <div class="mb-4">
+        <%= f.label :patient_id, "Paciente", class: "block font-semibold mb-1" %>
+        <%= f.collection_select :patient_id, Patient.order(:name), :id, :name, {prompt: "Selecione"}, class: "w-full rounded p-2 border" %>
+      </div>
+      <div class="mb-4">
+        <%= f.label :professional_id, "Profissional", class: "block font-semibold mb-1" %>
+        <%= f.collection_select :professional_id, Professional.order(:name), :id, :name, {prompt: "Selecione"}, class: "w-full rounded p-2 border" %>
+      </div>
+      <div class="mb-4">
+        <%= f.label :specialty_id, "Especialidade", class: "block font-semibold mb-1" %>
+        <%= f.collection_select :specialty_id, Specialty.order(:name), :id, :name, {prompt: "Selecione"}, class: "w-full rounded p-2 border" %>
+      </div>
+      <div class="text-center">
+        <%= f.submit "Salvar", class: "bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 font-bold" %>
+      </div>
     <% end %>
   </div>
 </div>
