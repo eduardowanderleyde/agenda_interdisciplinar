@@ -76,6 +76,13 @@
           end
           tem_especialidade = especialidade_id.present? ? prof.specialties.exists?(id: especialidade_id) : true
           Rails.logger.info "Profissional: #{prof.name} | Especialidade: #{tem_especialidade} | Dia: #{atende_dia} | Horário: #{atende_horario}"
+            # LOG para debug
+          Rails.logger.info "---"
+          Rails.logger.info "Profissional: #{prof.name}"
+          Rails.logger.info "available_days: #{prof.available_days.inspect}"
+          Rails.logger.info "available_hours[#{dia_semana_pt}]: #{prof.available_hours[dia_semana_pt].inspect}"
+          Rails.logger.info "Horário pedido: #{@horario} (#{horario_t.strftime('%H:%M') rescue 'erro'})"
+          Rails.logger.info "Atende dia? #{atende_dia} | Atende horário? #{atende_horario} | Tem especialidade? #{tem_especialidade}"
           atende_dia && atende_horario && tem_especialidade
         end
         @total_profissionais_checados = profissionais.size

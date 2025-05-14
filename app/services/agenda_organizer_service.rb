@@ -68,8 +68,13 @@ class AgendaOrganizerService
           next if hour == 12
 
           available_professionals = @professionals.select do |prof|
-            prof.available_days.include?(start_time.strftime('%A').downcase) &&
-              prof.available_hours.any? { |h| h.include?(start_time.strftime('%H:%M')) } &&
+            dia = start_time.strftime('%A').downcase
+            prof.available_hours[dia]&.any? do |intervalo|
+              ini, fim = intervalo.split(' - ')
+              ini_t = Time.zone.parse("#{start_time.to_date} #{ini}")
+              fim_t = Time.zone.parse("#{start_time.to_date} #{fim}")
+              start_time >= ini_t && end_time <= fim_t
+            end &&
               prof_busy[prof.id].none? { |range| range.overlaps?(start_time...end_time) }
           end
 

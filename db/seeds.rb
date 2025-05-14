@@ -37,13 +37,14 @@ Room.destroy_all
 end
 
 # Profissionais brasileiros com muita disponibilidade
+Professional.destroy_all
 def nomes_profissionais
   [
     'Camila Rocha', 'Pedro Lima', 'Fernanda Souza', 'Lucas Almeida', 'Juliana Castro',
     'Rafael Martins', 'Patrícia Oliveira', 'Bruno Carvalho', 'Marina Duarte', 'André Barbosa'
   ]
 end
-Professional.destroy_all
+
 nomes_profissionais.each do |nome|
   Professional.create!(
     name: nome,
@@ -55,11 +56,13 @@ nomes_profissionais.each do |nome|
       'thursday' => ['07:00 - 19:00'],
       'friday' => ['07:00 - 19:00']
     },
+    available_this_week: true,
     specialties: all_specialties.sample(rand(2..3))
   )
 end
 
 # Pacientes brasileiros com responsáveis e diagnósticos reais
+Patient.destroy_all
 def nomes_pacientes
   [
     'Lucas Silva', 'Ana Beatriz Souza', 'Gabriel Oliveira', 'Mariana Lima', 'Rafael Costa',
@@ -74,8 +77,9 @@ def nomes_responsaveis
     'Roberta Castro', 'André Martins', 'Juliana Oliveira', 'Bruno Fernandes', 'Camila Duarte'
   ]
 end
-Patient.destroy_all
+
 diagnosticos = ['TEA', 'TDAH', 'Dislexia', 'Atraso de fala', 'Deficiência Intelectual', 'Transtorno de Ansiedade']
+
 nomes_pacientes.each_with_index do |nome, idx|
   Patient.create!(
     name: nome,
@@ -83,6 +87,7 @@ nomes_pacientes.each_with_index do |nome, idx|
     diagnosis: diagnosticos.sample,
     responsible: nomes_responsaveis[idx % nomes_responsaveis.size],
     observations: Faker::Lorem.sentence(word_count: 8),
+    available_this_week: true,
     specialties: all_specialties.sample(rand(1..3))
   )
 end
@@ -93,30 +98,9 @@ Patient.create!(
   diagnosis: 'Teste de disponibilidade',
   responsible: 'Responsável Teste',
   observations: 'Paciente criado para testar disponibilidade de profissionais.',
+  available_this_week: true,
   specialties: [Specialty.first]
 )
-
-## Poucos agendamentos para facilitar organização automática
-# Appointment.destroy_all
-# 3.times do
-#   patient = Patient.order('RANDOM()').first
-#   professional = Professional.order('RANDOM()').first
-#   room = Room.order('RANDOM()').first
-#   day = Faker::Date.between(from: 2.days.ago, to: 2.days.from_now)
-#   hour = [8, 9, 10, 14, 15, 16].sample
-#   start_time = Time.zone.local(day.year, day.month, day.day, hour, [0, 30].sample)
-#   duration = [30, 45, 60].sample
-#   Appointment.create!(
-#     patient: patient,
-#     professional: professional,
-#     room: room,
-#     start_time: start_time,
-#     duration: duration,
-#     status: %w[agendado realizado cancelado].sample,
-#     notes: Faker::Lorem.sentence(word_count: 6),
-#     specialty: patient.specialties.sample
-#   )
-# end
 
 # Usuário admin
 User.find_or_create_by!(email: 'admin@example.com') do |user|
@@ -126,8 +110,7 @@ end
 
 # Usuário profissional externo
 unless User.exists?(email: 'externo@clinica.com')
-  User.create!(email: 'externo@clinica.com', password: '123456',
-               role: :profissional)
+  User.create!(email: 'externo@clinica.com', password: '123456', role: :profissional)
 end
 
 Professional.create!(
@@ -140,5 +123,6 @@ Professional.create!(
     'wednesday' => ['07:00 - 19:00'],
     'thursday' => ['07:00 - 19:00'],
     'friday' => ['07:00 - 19:00']
-  }
+  },
+  available_this_week: true
 )
