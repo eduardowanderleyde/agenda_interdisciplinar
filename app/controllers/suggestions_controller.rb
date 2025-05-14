@@ -6,6 +6,27 @@ class SuggestionsController < ApplicationController
     @rooms = Room.order(:name)
     @specialties = Specialty.order(:name)
 
+    # Garante que sempre monta a semana atual
+    start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : Date.today.beginning_of_week
+    end_date = start_date + 6.days
+    @week_days = (start_date..end_date).to_a
+
+    @hours = []
+    (7..18).each do |h|
+      @hours << '%02d:00' % h
+      @hours << '%02d:30' % h
+    end
+    @hours << '19:00'
+
+    # Monta grade vazia para exibir a tabela
+    @suggestions = {}
+    @week_days.each do |dia|
+      @suggestions[dia] = {}
+      @hours.each do |hora|
+        @suggestions[dia][hora] = []
+      end
+    end
+
     if params[:start_date].present?
       start_date = Date.parse(params[:start_date])
       end_date = start_date + 6.days
@@ -17,20 +38,22 @@ class SuggestionsController < ApplicationController
     end
 
     @selected_patient = params[:patient_id].presence && Patient.find_by(id: params[:patient_id])
-    @selected_room = params[:room_id].presence && Room.find_by(id: params[:room_id])
+    @selected_room = @rooms.find { |r| r.id.to_s == params[:room_id].to_s } || @rooms.first
     @selected_specialty = params[:specialty_id].presence && Specialty.find_by(id: params[:specialty_id])
-
-    @week_days = (Date.today.beginning_of_week..Date.today.end_of_week).to_a
 
     # Gera horários de 07:00 até 19:00 de 30 em 30 minutos
     @hours = []
     (7..18).each do |h|
-      @hours << "%02d:00" % h
-      @hours << "%02d:30" % h
+      @hours << '%02d:00' % h
+      @hours << '%02d:30' % h
     end
-    @hours << "19:00"
+    @hours << '19:00'
 
-    @suggestions = {}
+    # Hashes auxiliares para ocupação
+    sala_ocupada = Hash.new { |h, k| h[k] = {} } # sala_ocupada[dia][hora][sala_id] = true
+    paciente_ocupado = Hash.new { |h, k| h[k] = {} } # paciente_ocupado[dia][hora][patient_id] = true
+    profissional_ocupado = Hash.new { |h, k| h[k] = {} } # profissional_ocupado[dia][hora][prof_id] = true
+
     # Montar grade vazia: [dia][hora][sala] = nil
     grade = {}
     @week_days.each do |dia|
@@ -40,11 +63,6 @@ class SuggestionsController < ApplicationController
         @rooms.each { |sala| grade[dia][hora][sala.id] = nil }
       end
     end
-
-    # Hashes auxiliares para ocupação
-    sala_ocupada = Hash.new { |h, k| h[k] = {} } # sala_ocupada[dia][hora][sala_id] = true
-    paciente_ocupado = Hash.new { |h, k| h[k] = {} } # paciente_ocupado[dia][hora][patient_id] = true
-    profissional_ocupado = Hash.new { |h, k| h[k] = {} } # profissional_ocupado[dia][hora][prof_id] = true
 
     Patient.includes(:specialties).where(available_this_week: true).order(:name).each do |patient|
       patient.specialties.each do |spec|
@@ -59,14 +77,14 @@ class SuggestionsController < ApplicationController
             break if fim > Time.zone.parse("#{dia} 19:00")
 
             professionals_disponiveis = Professional.includes(:specialties).where(available_this_week: true).select do |prof|
-              prof.specialty_ids.include?(spec.id) &&
+              prof.specialties.exists?(id: spec.id) &&
                 prof.available_days.include?(dia_semana) &&
-                prof.available_hours[dia_semana]&.any? { |intervalo|
+                prof.available_hours[dia_semana]&.any? do |intervalo|
                   ini, fim_i = intervalo.split(' - ')
                   ini_t = Time.zone.parse("#{dia} #{ini}")
                   fim_t = Time.zone.parse("#{dia} #{fim_i}")
                   inicio >= ini_t && fim <= fim_t
-                }
+                end
             end
             if professionals_disponiveis.any?
               sala_livre = @rooms.find do |sala|
@@ -110,7 +128,9 @@ class SuggestionsController < ApplicationController
                     ocupado ||= paciente_ocupado[dia][t.strftime('%H:%M')][patient.id]
                     t += 30.minutes
                   end
-                  unless ocupado
+                  if ocupado
+                    Rails.logger.info "OCUPADO: Paciente #{patient.name} (#{spec.name}) já está ocupado em #{dia} #{hora}"
+                  else
                     t = inicio
                     while t < fim
                       grade[dia][t.strftime('%H:%M')] ||= {}
@@ -123,6 +143,7 @@ class SuggestionsController < ApplicationController
                           patient_name: patient.name,
                           professional_id: profissional.id,
                           professional_name: profissional.name,
+                          specialty_id: spec.id,
                           specialty: spec.name
                         }
                         sala_ocupada[dia][t.strftime('%H:%M')][sala_livre.id] = true
@@ -134,8 +155,6 @@ class SuggestionsController < ApplicationController
                     Rails.logger.info "ENCAIXADO: Paciente #{patient.name} (#{spec.name}) em #{dia} #{hora} na sala #{sala_livre.id} com profissional #{profissional.name}"
                     hora_idx += 1
                     break # Sai do loop de horários após encaixar para este paciente/especialidade/dia
-                  else
-                    Rails.logger.info "OCUPADO: Paciente #{patient.name} (#{spec.name}) já está ocupado em #{dia} #{hora}"
                   end
                 else
                   Rails.logger.info "SEM PROFISSIONAL: Paciente #{patient.name} (#{spec.name}) em #{dia} #{hora} - Nenhum profissional disponível"
@@ -165,6 +184,34 @@ class SuggestionsController < ApplicationController
         if @suggestions[dia][hora].size > 1
           Rails.logger.info "SOBREPOSIÇÃO: #{dia} #{hora} - #{@suggestions[dia][hora].size} agendamentos na mesma sala"
         end
+      end
+    end
+
+    # Montar grade atual: [dia][hora][sala] = agendamento ou nil
+    @grade_atual = {}
+    @week_days.each do |dia|
+      @grade_atual[dia] = {}
+      @hours.each do |hora|
+        @grade_atual[dia][hora] = {}
+        # Filtrar apenas a sala selecionada
+        sala = @selected_room
+        ag = nil
+        if defined?(@appointments) && @appointments
+          agendamento = @appointments.find do |a|
+            a.room_id == sala.id && a.start_time.strftime('%Y-%m-%d') == dia.strftime('%Y-%m-%d') && a.start_time.strftime('%H:%M') == hora
+          end
+          if agendamento
+            ag = {
+              patient_id: agendamento.patient_id,
+              patient_name: agendamento.patient&.name,
+              professional_id: agendamento.professional_id,
+              professional_name: agendamento.professional&.name,
+              specialty_id: agendamento.specialty_id,
+              specialty: agendamento.specialty&.name
+            }
+          end
+        end
+        @grade_atual[dia][hora][sala.id] = ag
       end
     end
   end
@@ -200,11 +247,16 @@ class SuggestionsController < ApplicationController
     especialidade_id = params[:especialidade_id]
     profissionais = []
     if patient && dia.present? && horario.present? && especialidade_id.present?
+      dia_semana = Date.parse(dia).strftime('%A').downcase
       profissionais = Professional.joins(:specialties)
                                   .where(specialties: { id: especialidade_id })
                                   .select do |prof|
-        prof.available_days.include?(Date.parse(dia).strftime('%A').downcase) &&
-          prof.available_hours.include?(horario) &&
+        prof.available_days.include?(dia_semana) &&
+          prof.available_hours[dia_semana]&.any? do |intervalo|
+            ini, fim_i = intervalo.split(' - ')
+            Time.zone.parse("#{dia} #{ini}") <= Time.zone.parse("#{dia} #{horario}") &&
+              Time.zone.parse("#{dia} #{horario}") < Time.zone.parse("#{dia} #{fim_i}")
+          end &&
           Appointment.where(professional: prof)
                      .where('DATE(start_time) = ?', dia)
                      .where('start_time::time = ?', horario)
@@ -223,11 +275,16 @@ class SuggestionsController < ApplicationController
     # Gera horários de 07:00 até 19:00 de 30 em 30 minutos
     hours = []
     (7..18).each do |h|
-      hours << "%02d:00" % h
-      hours << "%02d:30" % h
+      hours << '%02d:00' % h
+      hours << '%02d:30' % h
     end
-    hours << "19:00"
-    rooms = Room.order(:name).to_a
+    hours << '19:00'
+    # Filtrar salas pelo room_id antes de rodar o algoritmo
+    rooms = if params[:room_id].present?
+              Room.where(id: params[:room_id]).to_a
+            else
+              Room.order(:name).to_a
+            end
     professionals = Professional.includes(:specialties).where(available_this_week: true).to_a
     patients = Patient.includes(:specialties).where(available_this_week: true).to_a
     specialties = Specialty.all.index_by(&:id)
@@ -247,6 +304,8 @@ class SuggestionsController < ApplicationController
       end
     end
 
+    sugestoes = []
+
     # Simulação: para cada paciente, tentar encaixar em horários disponíveis com profissional e sala compatíveis
     patients.each do |patient|
       patient.specialties.each do |spec|
@@ -261,15 +320,16 @@ class SuggestionsController < ApplicationController
             break if fim > Time.zone.parse("#{dia} 19:00")
 
             professionals_disponiveis = professionals.select do |prof|
-              prof.specialty_ids.include?(spec.id) &&
+              prof.specialties.exists?(id: spec.id) &&
                 prof.available_days.include?(dia_semana) &&
-                prof.available_hours[dia_semana]&.any? { |intervalo|
+                prof.available_hours[dia_semana]&.any? do |intervalo|
                   ini, fim_i = intervalo.split(' - ')
                   ini_t = Time.zone.parse("#{dia} #{ini}")
                   fim_t = Time.zone.parse("#{dia} #{fim_i}")
                   inicio >= ini_t && fim <= fim_t
-                }
+                end
             end
+
             if professionals_disponiveis.any?
               sala_livre = rooms.find do |sala|
                 livre = true
@@ -283,6 +343,7 @@ class SuggestionsController < ApplicationController
                 end
                 livre
               end
+
               if sala_livre
                 # Marcar todos os slots do intervalo como ocupados para a sala
                 t = inicio
@@ -291,6 +352,7 @@ class SuggestionsController < ApplicationController
                   sala_ocupada[dia][t.strftime('%H:%M')][sala_livre.id] = true
                   t += 30.minutes
                 end
+
                 profissional = professionals_disponiveis.find do |prof|
                   livre = true
                   t = inicio
@@ -304,6 +366,7 @@ class SuggestionsController < ApplicationController
                   end
                   livre
                 end
+
                 if profissional
                   ocupado = false
                   t = inicio
@@ -312,6 +375,7 @@ class SuggestionsController < ApplicationController
                     ocupado ||= paciente_ocupado[dia][t.strftime('%H:%M')][patient.id]
                     t += 30.minutes
                   end
+
                   unless ocupado
                     t = inicio
                     while t < fim
@@ -325,7 +389,22 @@ class SuggestionsController < ApplicationController
                           patient_name: patient.name,
                           professional_id: profissional.id,
                           professional_name: profissional.name,
-                          specialty: spec.name
+                          specialty_id: spec.id,
+                          specialty: spec.name,
+                          dia: dia.strftime('%Y-%m-%d'),
+                          horario: t.strftime('%H:%M'),
+                          sala_id: sala_livre.id
+                        }
+                        sugestoes << {
+                          patient_id: patient.id,
+                          patient_name: patient.name,
+                          professional_id: profissional.id,
+                          professional_name: profissional.name,
+                          specialty_id: spec.id,
+                          specialty: spec.name,
+                          dia: dia.strftime('%Y-%m-%d'),
+                          horario: t.strftime('%H:%M'),
+                          sala_id: sala_livre.id
                         }
                         sala_ocupada[dia][t.strftime('%H:%M')][sala_livre.id] = true
                         paciente_ocupado[dia][t.strftime('%H:%M')][patient.id] = true
@@ -333,20 +412,11 @@ class SuggestionsController < ApplicationController
                       end
                       t += 30.minutes
                     end
-                    Rails.logger.info "ENCAIXADO: Paciente #{patient.name} (#{spec.name}) em #{dia} #{hora} na sala #{sala_livre.id} com profissional #{profissional.name}"
                     hora_idx += 1
-                    break # Sai do loop de horários após encaixar para este paciente/especialidade/dia
-                  else
-                    Rails.logger.info "OCUPADO: Paciente #{patient.name} (#{spec.name}) já está ocupado em #{dia} #{hora}"
+                    break
                   end
-                else
-                  Rails.logger.info "SEM PROFISSIONAL: Paciente #{patient.name} (#{spec.name}) em #{dia} #{hora} - Nenhum profissional disponível"
                 end
-              else
-                Rails.logger.info "SEM SALA: Paciente #{patient.name} (#{spec.name}) em #{dia} #{hora} - Nenhuma sala livre"
               end
-            else
-              Rails.logger.info "SEM PROFISSIONAL DISPONÍVEL: Paciente #{patient.name} (#{spec.name}) em #{dia} #{hora} - Nenhum profissional disponível no horário"
             end
             hora_idx += 1
           end
@@ -354,6 +424,21 @@ class SuggestionsController < ApplicationController
       end
     end
 
-    render partial: 'simulacao_grade', locals: { grade: grade, week_days: week_days, hours: hours, rooms: rooms }
+    # sugestoes.select! { |s| s[:sala_id].to_s == params[:room_id].to_s } if params[:room_id].present?
+
+    respond_to do |format|
+      format.html do
+        render partial: 'simulacao_grade', locals: { grade: grade, week_days: week_days, hours: hours, rooms: rooms }
+      end
+      format.json { render json: { sugestoes: sugestoes } }
+    end
+  end
+
+  private
+
+  def require_admin!
+    return if current_user&.admin?
+
+    redirect_to root_path, alert: 'Acesso não autorizado.'
   end
 end
