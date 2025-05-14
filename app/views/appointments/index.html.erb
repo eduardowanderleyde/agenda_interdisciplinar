@@ -54,26 +54,38 @@
           </div>
         <% end %>
       </div>
+<div id="appointments" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+  <% if @appointments.any? %>
+    <% @appointments.each do |appointment| %>
+      <div class="bg-white rounded-2xl shadow-md border border-indigo-100 hover:shadow-xl transition duration-300 p-6 space-y-3">
+        <div>
+          <p class="text-lg font-bold text-indigo-800"><%= appointment.patient.name %></p>
+          <p class="text-gray-700">
+            Profissional: <%= appointment.professional.name %><br>
+            Área: <%= appointment.specialty&.name || "—" %><br>
+            Sala: <%= appointment.room.name %><br>
+            <%= appointment.start_time.strftime('%d/%m às %H:%M') %> - <%= appointment.duration %> min
+          </p>
+        </div>
 
-      <div id="appointments" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <% if @appointments.any? %>
-          <% @appointments.each do |appointment| %>
-            <div class="bg-white rounded-2xl shadow-md border border-indigo-100 hover:shadow-xl transition duration-300">
-              <%= render appointment %>
-            </div>
-          <% end %>
-          <div class="col-span-full mt-4">
-            <%= raw(pagy_bootstrap_nav(@pagy)) %>
-          </div>
-        <% else %>
-          <div class="col-span-full flex flex-col items-center justify-center py-16">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-indigo-200 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <p class="text-lg text-indigo-400 font-semibold">Nenhum agendamento encontrado para os filtros selecionados.</p>
-          </div>
-        <% end %>
+        <div class="flex gap-2 mt-4">
+          <%= link_to "🔍 Detalhes", appointment_path(appointment),
+            class: "text-white bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg text-sm font-semibold" %>
+          <%= link_to "✏️ Editar", edit_appointment_path(appointment),
+            class: "text-white bg-indigo-500 hover:bg-indigo-600 px-3 py-2 rounded-lg text-sm font-semibold" %>
+          <%= link_to "❌ Deletar", appointment_path(appointment),
+            method: :delete,
+            data: { confirm: "Tem certeza que deseja excluir este agendamento?" },
+            class: "text-white bg-red-500 hover:bg-red-600 px-3 py-2 rounded-lg text-sm font-semibold" %>
+        </div>
       </div>
+    <% end %>
+  <% else %>
+    <div class="col-span-full flex flex-col items-center justify-center py-16">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-indigo-200 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+      <p class="text-lg text-indigo-400 font-semibold">Nenhum agendamento encontrado para os filtros selecionados.</p>
     </div>
-  </div>
+  <% end %>
 </div>

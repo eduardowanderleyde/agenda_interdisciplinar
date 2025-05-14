@@ -115,4 +115,78 @@ export default class extends Controller {
   remove(event) {
     event.target.closest('li').remove()
   }
+
+  adicionarHorario(event) {
+    const btn = event.currentTarget;
+    const dia = btn.getAttribute('data-dia');
+    const diaCheckbox = document.querySelector(`input[name="professional[available_days][]"][value="${dia}"]`);
+    if (!diaCheckbox.checked) {
+      this.showToast('Marque o checkbox do dia primeiro!', '#f87171');
+      return;
+    }
+    const inicio = document.querySelector(`input.js-inicio[data-dia="${dia}"]`).value.trim();
+    const fim = document.querySelector(`input.js-fim[data-dia="${dia}"]`).value.trim();
+    if (!inicio || !fim) {
+      this.showToast('Preencha início e fim!', '#f87171');
+      return;
+    }
+    const lista = document.getElementById(`lista-horarios-${dia}`);
+    const texto = `${inicio} - ${fim}`;
+    const horariosExistentes = Array.from(lista.querySelectorAll('li span')).map(span => span.textContent.trim());
+    const conflito = horariosExistentes.some(intervalo => {
+      const [existeInicio, existeFim] = intervalo.split(' - ');
+      return (inicio < existeFim && fim > existeInicio);
+    });
+    if (conflito) {
+      this.showToast('Este intervalo se sobrepõe com outro existente!', '#f87171');
+      return;
+    }
+    // Confirmação antes de adicionar
+    if (!confirm(`Você quer mesmo adicionar o horário ${texto} para ${this.diaPt(dia)}?`)) {
+      return;
+    }
+    // Adiciona à lista
+    const li = document.createElement('li');
+    li.className = 'flex items-center bg-green-100 text-green-900 rounded px-3 py-1 mb-1 font-semibold text-xs shadow-sm';
+    li.innerHTML = `<span>${texto}</span>
+      <input type="hidden" name="professional[available_hours][${dia}][]" value="${texto}">
+      <button type="button" onclick="this.parentElement.remove()" class="ml-2 text-red-600 hover:text-red-800 font-bold text-lg bg-transparent border-none cursor-pointer">&times;</button>`;
+    lista.appendChild(li);
+    this.showToast('Horário adicionado com sucesso!', '#22c55e');
+    document.querySelector(`input.js-inicio[data-dia="${dia}"]`).value = '';
+    document.querySelector(`input.js-fim[data-dia="${dia}"]`).value = '';
+  }
+
+  capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  diaPt(dia) {
+    const map = {
+      monday: 'Segunda',
+      tuesday: 'Terça',
+      wednesday: 'Quarta',
+      thursday: 'Quinta',
+      friday: 'Sexta'
+    };
+    return map[dia] || this.capitalize(dia);
+  }
+
+  showToast(msg, color) {
+    const alertDiv = document.createElement('div');
+    alertDiv.textContent = msg;
+    alertDiv.style.position = 'fixed';
+    alertDiv.style.top = '40px';
+    alertDiv.style.left = '50%';
+    alertDiv.style.transform = 'translateX(-50%)';
+    alertDiv.style.background = color;
+    alertDiv.style.color = 'white';
+    alertDiv.style.padding = '16px 32px';
+    alertDiv.style.borderRadius = '12px';
+    alertDiv.style.fontSize = '1.1rem';
+    alertDiv.style.boxShadow = '0 2px 16px 0 rgba(0,0,0,0.10)';
+    alertDiv.style.zIndex = '9999';
+    document.body.appendChild(alertDiv);
+    setTimeout(() => { alertDiv.remove(); }, 1500);
+  }
 } 

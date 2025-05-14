@@ -1,23 +1,27 @@
 <% cache(appointment) do %>
-<div id="appointment_<%= appointment.id %>" class="mb-2 p-2 rounded-lg bg-indigo-50 border-l-4 border-indigo-400 shadow-sm text-xs">
-  <div class="font-bold text-indigo-900 text-sm mb-0.5"><%= appointment.patient.name %></div>
-  <div class="text-xs text-indigo-800 mb-0.5">Profissional: <%= appointment.professional.name %></div>
-  <div class="text-[11px] text-indigo-700 mb-0.5">Área: <%= appointment.professional.specialties.map(&:name).join(', ') %></div>
-  <div class="text-[11px] text-indigo-700 mb-0.5">Sala: <%= appointment.room.name %></div>
-  <div class="text-[11px] text-gray-600 mb-1"><%= l(appointment.start_time, format: :short) %> - <%= appointment.duration %> min</div>
-  <div class="flex gap-1 mt-1">
-    <%= link_to appointment_path(appointment), class: "inline-flex items-center px-2 py-0.5 rounded bg-indigo-600 text-white text-xs font-semibold shadow hover:bg-indigo-700 transition" do %>
-      <svg xmlns='http://www.w3.org/2000/svg' class='h-3 w-3 mr-1' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M15 12a3 3 0 11-6 0 3 3 0 016 0z' /><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2.458 12C3.732 7.943 7.522 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.478 0-8.268-2.943-9.542-7z' /></svg>
-      Detalhes
-    <% end %>
-    <%= link_to edit_appointment_path(appointment), data: { turbo_frame: "modal" }, class: "inline-flex items-center px-2 py-0.5 rounded bg-blue-600 text-white text-xs font-semibold shadow hover:bg-blue-700 transition" do %>
-      <svg xmlns='http://www.w3.org/2000/svg' class='h-3 w-3 mr-1' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M15.232 5.232l3.536 3.536M9 13l6-6m2 2l-6 6m-2 2h6' /></svg>
-      Editar
-    <% end %>
-    <%= button_to appointment_path(appointment), method: :delete, data: { confirm: 'Tem certeza que deseja excluir este agendamento?' }, class: "inline-flex items-center px-2 py-0.5 rounded bg-red-600 text-white text-xs font-semibold shadow hover:bg-red-700 transition" do %>
-      <svg xmlns='http://www.w3.org/2000/svg' class='h-3 w-3 mr-1' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 18L18 6M6 6l12 12' /></svg>
-      Deletar
-    <% end %>
+  <div id="appointment_<%= appointment.id %>" class="p-5 bg-white rounded-2xl shadow-md border border-indigo-100 hover:shadow-xl transition duration-300 space-y-3">
+    <div>
+      <p class="text-lg font-bold text-indigo-800"><%= appointment.patient.name %></p>
+      <p class="text-sm text-gray-700">
+        Profissional: <%= appointment.professional.name %><br>
+        Área: <%= appointment.professional.specialties.map(&:name).join(', ') %><br>
+        Sala: <%= appointment.room.name %><br>
+        <%= l(appointment.start_time, format: :short) %> - <%= appointment.duration %> min
+      </p>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      <%= link_to appointment_path(appointment), class: "text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-semibold transition" do %>
+        🔍 Detalhes
+      <% end %>
+
+      <%= link_to edit_appointment_path(appointment), data: { turbo_frame: "modal" }, class: "text-white bg-indigo-500 hover:bg-indigo-600 px-4 py-2 rounded-lg text-sm font-semibold transition" do %>
+        ✏️ Editar
+      <% end %>
+
+      <%= button_to appointment_path(appointment), method: :delete, data: { confirm: 'Tem certeza que deseja excluir este agendamento?' }, class: "text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm font-semibold transition" do %>
+        ❌ Deletar
+      <% end %>
+    </div>
   </div>
-</div>
 <% end %>

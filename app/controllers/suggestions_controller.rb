@@ -76,7 +76,7 @@ class SuggestionsController < ApplicationController
             fim = inicio + duration.minutes
             break if fim > Time.zone.parse("#{dia} 19:00")
 
-            professionals_disponiveis = Professional.includes(:specialties).where(available_this_week: true).select do |prof|
+            professionals_disponiveis = Professional.includes(:specialties).where(available_this_week: true).to_a.select do |prof|
               prof.specialties.exists?(id: spec.id) &&
                 prof.available_days.include?(dia_semana) &&
                 prof.available_hours[dia_semana]&.any? do |intervalo|
@@ -236,7 +236,7 @@ class SuggestionsController < ApplicationController
 
   def especialidades
     patient = Patient.find_by(id: params[:patient_id])
-    especialidades = patient ? patient.specialties.select(:id, :name) : []
+    especialidades = patient ? patient.specialties.to_a.select(:id, :name) : []
     render json: { especialidades: especialidades }
   end
 
@@ -250,7 +250,7 @@ class SuggestionsController < ApplicationController
       dia_semana = Date.parse(dia).strftime('%A').downcase
       profissionais = Professional.joins(:specialties)
                                   .where(specialties: { id: especialidade_id })
-                                  .select do |prof|
+                                  .to_a.select do |prof|
         prof.available_days.include?(dia_semana) &&
           prof.available_hours[dia_semana]&.any? do |intervalo|
             ini, fim_i = intervalo.split(' - ')
@@ -319,7 +319,7 @@ class SuggestionsController < ApplicationController
             fim = inicio + duration.minutes
             break if fim > Time.zone.parse("#{dia} 19:00")
 
-            professionals_disponiveis = professionals.select do |prof|
+            professionals_disponiveis = professionals.to_a.select do |prof|
               prof.specialties.exists?(id: spec.id) &&
                 prof.available_days.include?(dia_semana) &&
                 prof.available_hours[dia_semana]&.any? do |intervalo|
@@ -430,7 +430,17 @@ class SuggestionsController < ApplicationController
       format.html do
         render partial: 'simulacao_grade', locals: { grade: grade, week_days: week_days, hours: hours, rooms: rooms }
       end
-      format.json { render json: { sugestoes: sugestoes } }
+      format.json do
+        html = render_to_string(partial: 'simulacao_grade', formats: [:html], locals: {
+                                  grade: grade,
+                                  week_days: week_days,
+                                  hours: hours,
+                                  rooms: rooms,
+                                  tabela_tipo: 'sugestao',
+                                  selected_room: rooms.first # ou use @selected_room se já estiver definido
+                                })
+        render json: { sugestoes: sugestoes, html: html }
+      end
     end
   end
 

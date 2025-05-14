@@ -12,9 +12,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :appointments do
-    resources :evolutions, shallow: true
-  end
+  resources :appointments, only: [:index, :show, :new, :create, :edit, :update, :destroy]
 
   resources :evolutions, only: %i[index show edit update destroy]
   resources :patients do
@@ -45,4 +43,6 @@ Rails.application.routes.draw do
   get 'organizar', to: 'organizar#index', as: :organizar
   post 'organizar/escolher', to: 'organizar#escolher', as: :escolher_agenda
   get 'organizar/confirmar', to: 'organizar#confirmar', as: :confirmar_agenda
+
+  post 'appointments/batch_update', to: 'appointments#batch_update'
 end

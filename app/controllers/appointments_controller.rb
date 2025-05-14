@@ -79,6 +79,84 @@ class AppointmentsController < ApplicationController
     end
   end
 
+  # POST /appointments/batch_update
+  def batch_update
+    begin
+      ags = params[:agendamentos] || []
+      conflitos = []
+
+      # Validação prévia de todos os agendamentos
+      ags.each do |ag|
+        if ag["room_id"].blank? || ag["room_id"] == "undefined" ||
+           ag["start_time"].blank? || (Time.zone.parse(ag["start_time"]) rescue nil).nil?
+          conflitos << {
+            agendamento: ag,
+            motivo: "Dados inválidos: sala ou horário não selecionados corretamente."
+          }
+        end
+      end
+
+      if conflitos.any?
+        render json: { status: 'erro', conflitos: conflitos }, status: 422
+        return
+      end
+
+      # Só executa se todos os agendamentos são válidos
+      if ags.any?
+        semana = Date.parse(ags.first["start_time"]).beginning_of_week..Date.parse(ags.first["start_time"]).end_of_week
+        Appointment.where(start_time: semana).delete_all
+      end
+
+      ags.each do |ag|
+        inicio = Time.zone.parse(ag["start_time"])
+        fim = inicio + 30.minutes
+
+        conflito = Appointment.exists?([
+          "(room_id = :room AND ((start_time, (start_time + (duration * interval '1 minute'))) OVERLAPS (:inicio, :fim))) OR\n \
+           (professional_id = :prof AND ((start_time, (start_time + (duration * interval '1 minute'))) OVERLAPS (:inicio, :fim))) OR\n \
+           (patient_id = :pac AND ((start_time, (start_time + (duration * interval '1 minute'))) OVERLAPS (:inicio, :fim)))",
+          {
+            room: ag["room_id"],
+            prof: ag["professional_id"],
+            pac: ag["patient_id"],
+            inicio: inicio,
+            fim: fim
+          }
+        ])
+
+        if conflito
+          conflitos << {
+            patient_id: ag["patient_id"],
+            professional_id: ag["professional_id"],
+            room_id: ag["room_id"],
+            start_time: ag["start_time"],
+            specialty_id: ag["specialty_id"],
+            motivo: "Conflito de sala, profissional ou paciente no horário"
+          }
+          next
+        end
+
+        Appointment.create!(
+          patient_id: ag["patient_id"],
+          professional_id: ag["professional_id"],
+          room_id: ag["room_id"],
+          start_time: ag["start_time"],
+          specialty_id: ag["specialty_id"],
+          duration: 30
+        )
+      end
+
+      if conflitos.any?
+        render json: { status: 'erro', conflitos: conflitos }, status: 422
+        return
+      end
+
+      head :ok
+    rescue => e
+      render json: { status: 'erro', mensagem: "Erro interno: #{e.message}" }, status: 500
+    end
+  end
+
   private
 
   # Use callbacks to share common setup or constraints between actions.

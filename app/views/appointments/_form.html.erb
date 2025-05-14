@@ -1,6 +1,16 @@
 <div class="max-w-xl mx-auto bg-white/30 rounded-3xl shadow-2xl p-12 space-y-12 backdrop-blur-md border border-white/20" style="background: linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%);">
   <h2 class="text-3xl font-bold text-white mb-10 text-center drop-shadow">Novo Agendamento</h2>
   <%= simple_form_for(@appointment, html: { data: { controller: "appointment-form" }, class: "space-y-10" }) do |f| %>
+  <% if @appointment.errors.any? %>
+    <div class="bg-red-100 text-red-800 font-bold px-6 py-4 rounded-lg shadow mb-8 text-center">
+      <h3 class="mb-2">Erros ao salvar o agendamento:</h3>
+      <ul class="list-disc list-inside text-left mx-auto max-w-md">
+        <% @appointment.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
   <%= f.error_notification %>
   <%= f.error_notification message: f.object.errors[:base].to_sentence if f.object.errors[:base].present? %>
 
@@ -28,7 +38,7 @@
           <%= select_tag 'appointment[start_time(2i)]', options_for_select(I18n.t('date.month_names').compact.each_with_index.map { |m, i| [m, i+1] }, @appointment.start_time&.month), class: "rounded-xl p-2 bg-white/80 text-gray-900 focus:ring-2 focus:ring-indigo-500" %>
           <%= select_tag 'appointment[start_time(1i)]', options_for_select((Date.current.year..(Date.current.year+5)).to_a, @appointment.start_time&.year || Date.current.year), class: "rounded-xl p-2 bg-white/80 text-gray-900 focus:ring-2 focus:ring-indigo-500" %>
           <span class="mx-2 font-bold text-indigo-100">-</span>
-          <%= select_tag 'appointment[start_time(4i)]', options_for_select((0..23).map { |h| ["%02d" % h, h] }, @appointment.start_time&.hour), class: "rounded-xl p-2 bg-white/80 text-gray-900 focus:ring-2 focus:ring-indigo-500" %>
+          <%= select_tag 'appointment[start_time(4i)]', options_for_select((0..23).map { |h| ["%02d" % h, h] }, @appointment.start_time&.hour), class: "rounded-xl p-2 bg-white/80 text-gray-900 focus:ring-2 focus:ring-indigo-500", data: { appointment_form_target: "time" } %>
           <span class="font-bold text-indigo-100">:</span>
           <%= select_tag 'appointment[start_time(5i)]', options_for_select((0..59).map { |m| ["%02d" % m, m] }, @appointment.start_time&.min), class: "rounded-xl p-2 bg-white/80 text-gray-900 focus:ring-2 focus:ring-indigo-500", data: { appointment_form_target: "date" } %>
       </div>

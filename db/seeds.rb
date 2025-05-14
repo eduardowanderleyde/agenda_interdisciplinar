@@ -67,6 +67,7 @@ def nomes_pacientes
     'João Pedro Ribeiro', 'Laura Mendes', 'Enzo Almeida', 'Helena Duarte', 'Gustavo Barbosa'
   ]
 end
+
 def nomes_responsaveis
   [
     'Maria da Silva', 'João Pereira', 'Patrícia Souza', 'Carlos Henrique', 'Fernanda Lima',
@@ -82,9 +83,18 @@ nomes_pacientes.each_with_index do |nome, idx|
     diagnosis: diagnosticos.sample,
     responsible: nomes_responsaveis[idx % nomes_responsaveis.size],
     observations: Faker::Lorem.sentence(word_count: 8),
-    specialty_ids: all_specialties.sample(rand(1..3)).map(&:id)
+    specialties: all_specialties.sample(rand(1..3))
   )
 end
+
+Patient.create!(
+  name: 'Paciente Teste Disponível',
+  birthdate: Date.new(2015, 5, 14),
+  diagnosis: 'Teste de disponibilidade',
+  responsible: 'Responsável Teste',
+  observations: 'Paciente criado para testar disponibilidade de profissionais.',
+  specialties: [Specialty.first]
+)
 
 ## Poucos agendamentos para facilitar organização automática
 # Appointment.destroy_all
@@ -119,3 +129,16 @@ unless User.exists?(email: 'externo@clinica.com')
   User.create!(email: 'externo@clinica.com', password: '123456',
                role: :profissional)
 end
+
+Professional.create!(
+  name: 'Profissional Completo',
+  specialties: Specialty.all.sample(2),
+  available_days: %w[monday tuesday wednesday thursday friday],
+  available_hours: {
+    'monday' => ['07:00 - 19:00'],
+    'tuesday' => ['07:00 - 19:00'],
+    'wednesday' => ['07:00 - 19:00'],
+    'thursday' => ['07:00 - 19:00'],
+    'friday' => ['07:00 - 19:00']
+  }
+)

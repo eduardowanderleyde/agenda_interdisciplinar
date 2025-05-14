@@ -12,8 +12,32 @@
           <%= f.collection_select :patient_id, Patient.order(:name), :id, :name, {prompt: "Selecione"}, class: "w-full rounded-xl p-3 border border-gray-300" %>
         </div>
         <div class="w-full">
-          <label for="start_date" class="block font-semibold mb-1 text-indigo-700">Data desejada</label>
-          <%= f.date_field :start_date, class: "w-full rounded-xl p-3 border border-gray-300", value: params[:start_date] || Date.current.strftime('%Y-%m-%d') %>
+          <label class="block text-sm font-medium text-gray-700">Data</label>
+          <%= f.date_field :start_date, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm", value: params[:start_date] || Date.current.strftime('%Y-%m-%d') %>
+        </div>
+        <div class="w-full">
+          <label class="block text-sm font-medium text-gray-700">Especialidade</label>
+          <select name="especialidade_id" id="especialidade_id" class="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            <% if @especialidades_paciente.present? %>
+              <optgroup label="Especialidades do paciente">
+                <% @especialidades_paciente.each do |e| %>
+                  <option value="<%= e.id %>" <%= 'selected' if params[:especialidade_id].to_s == e.id.to_s %>><%= e.name %></option>
+                <% end %>
+              </optgroup>
+            <% end %>
+            <% outras = Specialty.where.not(id: (@especialidades_paciente || []).map(&:id)) %>
+            <% if outras.any? %>
+              <optgroup label="Outras especialidades">
+                <% outras.each do |e| %>
+                  <option value="<%= e.id %>" <%= 'selected' if params[:especialidade_id].to_s == e.id.to_s %>><%= e.name %></option>
+                <% end %>
+              </optgroup>
+            <% end %>
+          </select>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700">Horário</label>
+          <%= f.select :horario, options_for_select(['08:00', '09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00'], params[:horario]), class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %>
         </div>
         <div class="w-full flex justify-center">
           <%= f.submit "Buscar disponibilidade", class: "bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow hover:bg-indigo-700 transition" %>

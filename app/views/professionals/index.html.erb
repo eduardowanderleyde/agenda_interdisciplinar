@@ -5,51 +5,51 @@
     <div class="flex justify-between items-center mb-10">
       <h1 class="text-5xl font-bold text-gray-900">Profissionais</h1>
       <%= link_to "Novo Profissional", new_professional_path, class: "bg-indigo-600 text-white px-5 py-3 rounded-lg shadow hover:bg-indigo-700 transition text-lg font-semibold" %>
-    </div>
+  </div>
 
     <div class="overflow-x-auto w-full">
       <table class="w-full text-base text-gray-800 divide-y divide-gray-200">
         <thead class="uppercase text-indigo-700 border-b border-gray-200 bg-gray-50">
-          <tr>
+        <tr>
             <th class="text-left font-bold px-4 py-3">Nome</th>
             <th class="text-left font-bold px-4 py-3">Dias Disponíveis</th>
             <th class="text-left font-bold px-4 py-3">Horários Disponíveis</th>
             <th class="text-center font-bold px-4 py-3">Disponível essa semana</th>
             <th class="text-center font-bold px-4 py-3">Ações</th>
-          </tr>
-        </thead>
+        </tr>
+      </thead>
         <tbody class="divide-y divide-gray-100">
-          <% dias_semana = {
-            'monday' => 'Segunda-feira', 'mon' => 'Segunda-feira', 'segunda' => 'Segunda-feira', 's' => 'Segunda-feira',
-            'tuesday' => 'Terça-feira', 'tue' => 'Terça-feira', 'terça' => 'Terça-feira', 'n' => 'Terça-feira',
-            'wednesday' => 'Quarta-feira', 'wed' => 'Quarta-feira', 'quarta' => 'Quarta-feira', 'q' => 'Quarta-feira',
-            'thursday' => 'Quinta-feira', 'thu' => 'Quinta-feira', 'quinta' => 'Quinta-feira', 'a' => 'Quinta-feira',
-            'friday' => 'Sexta-feira', 'fri' => 'Sexta-feira', 'sexta' => 'Sexta-feira', 'x' => 'Sexta-feira',
-            'saturday' => 'Sábado', 'sat' => 'Sábado', 'sábado' => 'Sábado', 'b' => 'Sábado',
-            'sunday' => 'Domingo', 'sun' => 'Domingo', 'domingo' => 'Domingo', 'd' => 'Domingo'
-          } %>
-          <% @professionals.each do |professional| %>
-            <tr>
+        <% dias_semana = {
+          'monday' => 'Segunda-feira', 'mon' => 'Segunda-feira', 'segunda' => 'Segunda-feira', 's' => 'Segunda-feira',
+          'tuesday' => 'Terça-feira', 'tue' => 'Terça-feira', 'terça' => 'Terça-feira', 'n' => 'Terça-feira',
+          'wednesday' => 'Quarta-feira', 'wed' => 'Quarta-feira', 'quarta' => 'Quarta-feira', 'q' => 'Quarta-feira',
+          'thursday' => 'Quinta-feira', 'thu' => 'Quinta-feira', 'quinta' => 'Quinta-feira', 'a' => 'Quinta-feira',
+          'friday' => 'Sexta-feira', 'fri' => 'Sexta-feira', 'sexta' => 'Sexta-feira', 'x' => 'Sexta-feira',
+          'saturday' => 'Sábado', 'sat' => 'Sábado', 'sábado' => 'Sábado', 'b' => 'Sábado',
+          'sunday' => 'Domingo', 'sun' => 'Domingo', 'domingo' => 'Domingo', 'd' => 'Domingo'
+        } %>
+        <% @professionals.each do |professional| %>
+          <tr>
               <td class="px-4 py-4 font-semibold text-gray-900"><%= professional.name %></td>
               <td class="px-4 py-4">
-                <% dias = (professional.available_days || []).map { |d| dias_semana[d.to_s.strip.downcase] || d }.uniq.join(', ') %>
-                <%= dias.presence || '-' %>
-              </td>
+              <% dias = (professional.available_days || []).map { |d| dias_semana[d.to_s.strip.downcase] || d }.uniq.join(', ') %>
+              <%= dias.presence || '-' %>
+            </td>
               <td class="px-4 py-4">
-                <% dias_semana_lista = [
-                  ['monday', 'Segunda'],
-                  ['tuesday', 'Terça'],
-                  ['wednesday', 'Quarta'],
-                  ['thursday', 'Quinta'],
-                  ['friday', 'Sexta']
-                ] %>
-                <% ah = professional.available_hours.is_a?(Hash) ? professional.available_hours : {} %>
-                <% horarios = dias_semana_lista.map do |dia_key, dia_label|
-                  hs = (ah[dia_key] || [])
-                  hs.any? ? "#{dia_label}: #{hs.join(', ')}" : nil
-                end.compact.join(' | ') %>
-                <%= horarios.presence || '-' %>
-              </td>
+              <% dias_semana_lista = [
+                ['monday', 'Segunda'],
+                ['tuesday', 'Terça'],
+                ['wednesday', 'Quarta'],
+                ['thursday', 'Quinta'],
+                ['friday', 'Sexta']
+              ] %>
+              <% ah = professional.available_hours.is_a?(Hash) ? professional.available_hours : {} %>
+              <% horarios = dias_semana_lista.map do |dia_key, dia_label|
+                hs = (ah[dia_key] || [])
+                hs.any? ? "#{dia_label}: #{hs.join(', ')}" : nil
+              end.compact.join(' | ') %>
+              <%= horarios.presence || '-' %>
+            </td>
               <td class="px-4 py-4 text-center">
                 <div class="inline-flex items-center gap-2">
                   <%= check_box_tag "available_this_week_prof_#{professional.id}", 1, professional.available_this_week, data: { professional_id: professional.id }, class: "available-this-week-prof-checkbox h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" %>
@@ -60,12 +60,12 @@
                 <div class="flex justify-center gap-3">
                   <%= link_to 'Editar', edit_professional_path(professional), class: 'bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-bold shadow' %>
                   <%= button_to 'Excluir', professional_path(professional), method: :delete, data: { confirm: 'Tem certeza?' }, class: 'bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-bold shadow' %>
-                </div>
-              </td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
 
       <div class="mt-6">
         <%= raw(pagy_bootstrap_nav(@pagy)) %>

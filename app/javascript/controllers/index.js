@@ -22,3 +22,6 @@ application.register("planner", PlannerController)
 
 import SuggestionController from "./suggestion_controller"
 application.register("suggestion", SuggestionController)
+
+import OrganizarController from "./organizar_controller"
+application.register("organizar", OrganizarController)

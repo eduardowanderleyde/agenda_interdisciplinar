@@ -16,22 +16,22 @@
 
   <body class="bg-gradient-to-br from-primary via-secondary to-fundo min-h-screen">
     <% unless devise_controller? %>
-      <%= render NavigationComponent.new %>
+    <%= render NavigationComponent.new %>
       <main>
-        <% if notice %>
+    <% if notice %>
           <div class="alert alert-success">
             <%= sanitize(notice) %>
           </div>
-        <% end %>
-        <% if alert %>
+    <% end %>
+    <% if alert %>
           <div class="alert alert-danger">
             <%= alert %>
           </div>
-        <% end %>
+    <% end %>
 
-        <%= turbo_frame_tag "modal" %>
-        <%= yield %>
-      </main>
+    <%= turbo_frame_tag "modal" %>
+    <%= yield %>
+    </main>
     <% else %>
       <%= yield %>
     <% end %>

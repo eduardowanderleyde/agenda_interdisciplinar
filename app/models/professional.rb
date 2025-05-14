@@ -1,10 +1,10 @@
 class Professional < ApplicationRecord
   belongs_to :user, optional: true
   has_many :appointments, dependent: :destroy
+  has_many :availabilities, dependent: :destroy
   has_many :evolutions, through: :appointments
   has_many :professional_specialties, dependent: :destroy
   has_many :specialties, through: :professional_specialties
-
   validates :name, presence: true
   validates :available_days, presence: true
   validate :available_hours_format

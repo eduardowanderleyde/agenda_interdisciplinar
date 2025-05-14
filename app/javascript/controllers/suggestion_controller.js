@@ -13,20 +13,26 @@ export default class extends Controller {
   }
 
   simularHorarioSemana() {
-    const simulacaoDiv = document.getElementById('simulacao-horario-semanal');
-    if (simulacaoDiv) {
-      simulacaoDiv.innerHTML = '<div class="text-gray-500">Simulando organização da semana...</div>';
-      fetch('/suggestions/simulate_schedule')
-        .then(r => r.text())
-        .then(html => {
-          simulacaoDiv.innerHTML = html;
+    const roomId = document.getElementById('room_id')?.value;
+    const url = `/suggestions/simulate_schedule.json?room_id=${roomId}`;
+    fetch(url)
+      .then(r => r.json())
+      .then(data => {
+        // Substitui a tabela inteira de sugestões com o novo HTML vindo do backend
+        const container = document.getElementById('simulacao-horario-semanal');
+        if (container && data.html) {
+          container.innerHTML = data.html;
           this.initDragAndDrop();
-        })
-        .catch(() => {
-          simulacaoDiv.innerHTML = '<div class="text-red-600">Erro ao simular a semana.</div>';
-        });
-    }
+        } else {
+          alert('Nenhum dado retornado para sugestão.');
+        }
+      })
+      .catch(error => {
+        console.error('Erro ao simular a semana:', error);
+        alert('Erro ao simular a semana. Por favor, tente novamente.');
+      });
   }
+  
 
   initDragAndDrop() {
     document.querySelectorAll('.grade-droppable').forEach(cell => {
@@ -76,18 +82,74 @@ export default class extends Controller {
     // Botão salvar alterações
     const btnSalvar = document.getElementById('btn-salvar-alteracoes');
     if (btnSalvar) {
+      // Remove qualquer evento anterior para evitar múltiplos handlers
+      btnSalvar.onclick = null;
       btnSalvar.onclick = () => {
         const cards = document.querySelectorAll('.grade-card');
+        console.log('Cards encontrados:', cards.length, cards);
         const dados = Array.from(cards).map(card => ({
           dia: card.getAttribute('data-dia'),
           horario: card.getAttribute('data-horario'),
-          sala: card.getAttribute('data-sala'),
-          paciente: card.querySelector('.text-gray-700.mb-1')?.innerText.replace('Paciente: ', ''),
-          profissional: card.querySelector('.text-gray-700:not(.mb-1)')?.innerText.replace('Profissional: ', ''),
-          especialidade: card.querySelector('.font-bold')?.innerText.split(' - ')[1]?.trim()
+          sala_id: card.getAttribute('data-sala'),
+          patient_id: card.getAttribute('data-patient-id'),
+          professional_id: card.getAttribute('data-professional-id'),
+          specialty_id: card.getAttribute('data-specialty-id'),
         }));
-        console.log('Grade para salvar:', dados);
-        // Aqui pode ser feito um fetch/AJAX para enviar ao backend
+        console.log('Dados dos cards:', dados);
+        const roomId = document.getElementById('room_id')?.value;
+        const agendamentos = dados.map(d => {
+          let dataISO = '';
+          if (d.dia) {
+            if (d.dia.includes('/')) {
+              let [dia, mes, ano] = d.dia.trim().split('/');
+              if (!ano || ano.length !== 4) ano = new Date().getFullYear().toString();
+              if (dia.length === 1) dia = '0' + dia;
+              if (mes.length === 1) mes = '0' + mes;
+              dataISO = `${ano}-${mes}-${dia}`;
+            } else if (d.dia.match(/\d{4}-\d{2}-\d{2}/)) {
+              dataISO = d.dia.trim();
+            } else {
+              dataISO = d.dia.trim();
+            }
+          }
+          return {
+            patient_id: d.patient_id,
+            professional_id: d.professional_id,
+            room_id: roomId,
+            specialty_id: d.specialty_id,
+            start_time: `${dataISO}T${d.horario}:00`
+          };
+        });
+        console.log('Agendamentos montados:', agendamentos);
+        if (agendamentos.length === 0) {
+          alert('Nenhum agendamento para salvar!');
+          return;
+        }
+        const token = document.querySelector('meta[name="csrf-token"]').content;
+        fetch('/appointments/batch_update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': token
+          },
+          body: JSON.stringify({ agendamentos })
+        }).then(async resp => {
+          const data = await resp.json().catch(() => null);
+          console.log('Resposta do backend:', resp.status, data);
+          if (resp.ok) {
+            const primeiraData = agendamentos[0].start_time.split('T')[0];
+            window.location.href = `/organizar?room_id=${roomId}&start_date=${primeiraData}`;
+          } else if (resp.status === 422 && data && data.status === 'erro' && data.conflitos) {
+            let msg = 'Erros ao salvar agendamentos:\n';
+            data.conflitos.forEach(conf => {
+              msg += `Paciente: ${conf.agendamento?.patient_id || '-'} | Profissional: ${conf.agendamento?.professional_id || '-'} | Sala: ${conf.agendamento?.room_id || '-'} | Horário: ${conf.agendamento?.start_time || '-'}\n`;
+              msg += `Motivo: ${conf.motivo}\n\n`;
+            });
+            alert(msg);
+          } else {
+            alert('Erro ao salvar agendamentos!');
+          }
+        });
       };
     }
   }
@@ -192,4 +254,13 @@ export default class extends Controller {
         this.sugestoesTarget.innerHTML = html
       })
   }
+
+  toggleTabelaAtual() {
+    const tabela = document.getElementById('tabela-atual');
+    if (tabela) {
+      tabela.classList.toggle('hidden');
+      tabela.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
 }
+ 

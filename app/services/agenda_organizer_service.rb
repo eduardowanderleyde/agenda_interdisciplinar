@@ -52,9 +52,9 @@ class AgendaOrganizerService
     room_busy = Hash.new { |h, k| h[k] = [] }
     @appointments.each do |appt|
       if appt.professional_id
-        prof_busy[appt.professional_id] << (appt.start_time...(appt.start_time + appt.duration.minutes))
+        prof_busy[appt.professional_id] << (appt.start_time...(appt.start_time + appt.duration.to_i.minutes))
       end
-      room_busy[appt.room_id] << (appt.start_time...(appt.start_time + appt.duration.minutes)) if appt.room_id
+      room_busy[appt.room_id] << (appt.start_time...(appt.start_time + appt.duration.to_i.minutes)) if appt.room_id
     end
 
     while current_date <= @week_end
