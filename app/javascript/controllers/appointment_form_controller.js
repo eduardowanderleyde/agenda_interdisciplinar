@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["professional", "date", "duration", "time"]
+  static targets = ["professional", "date", "month", "year", "duration", "time"]
 
   connect() {
     this.updateTimes()
@@ -9,15 +9,17 @@ export default class extends Controller {
 
   updateTimes() {
     const professional = this.professionalTarget.value
-    const date = this.dateTarget.value
-    const duration = this.durationTarget.value
+    const day = this.dateTarget.value.padStart(2, '0')
+    const month = this.monthTarget.value.padStart(2, '0')
+    const year = this.yearTarget.value
+    const date = `${year}-${month}-${day}`
+    // duration não é mais necessário para working_hours
+    if (!professional || !date || isNaN(Date.parse(date))) return
 
-    if (!professional || !date || !duration) return
-
-    fetch(`/professionals/${professional}/available_times?date=${date}&duration=${duration}`)
+    fetch(`/professionals/${professional}/working_hours?date=${date}`)
       .then(response => {
-        if (!response.ok) throw new Error("Erro na resposta do servidor");
-        return response.json();
+        if (!response.ok) throw new Error("Erro na resposta do servidor")
+        return response.json()
       })
       .then(data => {
         this.timeTarget.innerHTML = '<option value="">Selecione</option>'
@@ -29,8 +31,8 @@ export default class extends Controller {
         })
       })
       .catch(error => {
-        console.error("Erro ao buscar horários disponíveis:", error);
-        this.timeTarget.innerHTML = '<option value="">Erro ao carregar horários</option>';
-      });
+        console.error("Erro ao buscar horários do expediente:", error)
+        this.timeTarget.innerHTML = '<option value="">Erro ao carregar horários</option>'
+      })
   }
-} 
+}

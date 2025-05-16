@@ -43,19 +43,19 @@
       <div>
         <%= f.label :start_time, "Data do atendimento", for: "appointment_start_time_3i", class: "block text-base font-bold text-white mb-2" %>
         <div class="flex flex-wrap gap-4">
-          <%= select_tag 'appointment[start_time(3i)]', options_for_select((1..31).map { |d| [d, d] }, @appointment.start_time&.day), class: "rounded-xl p-2 bg-white/80 text-gray-900 focus:ring-2 focus:ring-indigo-500" %>
-          <%= select_tag 'appointment[start_time(2i)]', options_for_select(I18n.t('date.month_names').compact.each_with_index.map { |m, i| [m, i+1] }, @appointment.start_time&.month), class: "rounded-xl p-2 bg-white/80 text-gray-900 focus:ring-2 focus:ring-indigo-500" %>
-          <%= select_tag 'appointment[start_time(1i)]', options_for_select((Date.current.year..(Date.current.year+5)).to_a, @appointment.start_time&.year || Date.current.year), class: "rounded-xl p-2 bg-white/80 text-gray-900 focus:ring-2 focus:ring-indigo-500" %>
+          <%= select_tag 'appointment[start_time(3i)]', options_for_select((1..31).map { |d| [d, d] }, @appointment.start_time&.day), class: "rounded-xl p-2 bg-white/80 text-gray-900 focus:ring-2 focus:ring-indigo-500", data: { appointment_form_target: "date" } %>
+          <%= select_tag 'appointment[start_time(2i)]', options_for_select(I18n.t('date.month_names').compact.each_with_index.map { |m, i| [m, i+1] }, @appointment.start_time&.month), class: "rounded-xl p-2 bg-white/80 text-gray-900 focus:ring-2 focus:ring-indigo-500", data: { appointment_form_target: "month" } %>
+          <%= select_tag 'appointment[start_time(1i)]', options_for_select((Date.current.year..(Date.current.year+5)).to_a, @appointment.start_time&.year || Date.current.year), class: "rounded-xl p-2 bg-white/80 text-gray-900 focus:ring-2 focus:ring-indigo-500", data: { appointment_form_target: "year" } %>
           <span class="mx-2 font-bold text-indigo-100">-</span>
-          <%= select_tag 'appointment[start_time(4i)]',
-                options_for_select([['Selecione', '']] + (0..23).map { |h| ["%02d" % h, h] }, @appointment.start_time&.hour.to_i),
-                class: "rounded-xl p-2 bg-white/80 text-gray-900 focus:ring-2 focus:ring-indigo-500",
-                data: { appointment_form_target: "time" } %>
-          <span class="font-bold text-indigo-100">:</span>
+          <%= select_tag 'appointment[start_time(4i)]', 
+    options_for_select((0..23).map { |h| ["#{h.to_s.rjust(2, '0')}", h] }, @appointment.start_time&.hour), 
+    class: "rounded-xl p-2 bg-white/80 text-gray-900 focus:ring-2 focus:ring-indigo-500", 
+    data: { appointment_form_target: "time" } %>
+
           <%= select_tag 'appointment[start_time(5i)]',
-                options_for_select([['Selecione', '']] + (0..59).map { |m| ["%02d" % m, m] }, @appointment.start_time&.min.to_i),
+                options_for_select([['00', '00'], ['30', '30']], @appointment.start_time&.min.to_s.rjust(2, '0')),
                 class: "rounded-xl p-2 bg-white/80 text-gray-900 focus:ring-2 focus:ring-indigo-500",
-                data: { appointment_form_target: "date" } %>
+                data: { appointment_form_target: "minute" } %>
       </div>
     </div>
     <div>
