@@ -15,7 +15,7 @@
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data de Nascimento</th>
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Responsável</th>
-          <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Disponível essa semana</th>
+          <th class="text-center font-bold px-4 py-3">Selecionar para agenda</th>
           <th class="px-6 py-3"></th>
         </tr>
       </thead>
@@ -25,11 +25,8 @@
             <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-800"><%= patient.name %></td>
             <td class="px-6 py-4 whitespace-nowrap text-gray-700"><%= l(patient.birthdate, format: :default, locale: :'pt-BR') %></td>
             <td class="px-6 py-4 whitespace-nowrap text-gray-700"><%= patient.responsible.presence || '-' %></td>
-            <td class="px-6 py-4 text-center">
-              <div class="inline-flex items-center gap-2">
-                <%= check_box_tag "available_this_week_#{patient.id}", 1, patient.available_this_week, data: { patient_id: patient.id }, class: "available-this-week-checkbox h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" %>
-                <span class="text-green-600 text-xs font-semibold saved-feedback" id="saved-feedback-<%= patient.id %>" style="display:none;">Salvo!</span>
-              </div>
+            <td class="px-4 py-4 text-center">
+              <%= check_box_tag "selected_for_schedule_#{patient.id}", 1, patient.selected_for_schedule, data: { patient_id: patient.id }, class: "select-for-schedule-patient h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" %>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <%= link_to "Ver detalhes", patient, class: "bg-white border border-gray-300 rounded px-3 py-1 text-sm font-medium text-gray-900 hover:bg-gray-50" %>
@@ -50,20 +47,69 @@ document.addEventListener('DOMContentLoaded', function() {
     checkbox.addEventListener('change', function() {
       const patientId = this.dataset.patientId;
       const checked = this.checked ? 1 : 0;
+      const feedback = document.getElementById(`saved-feedback-${patientId}`);
+      const originalState = this.checked;
+      this.disabled = true;
+      if (feedback) {
+        feedback.textContent = 'Salvando...';
+        feedback.style.color = '#2563eb'; // azul
+        feedback.style.display = 'inline';
+      }
+      const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
+      if (!csrfTokenMeta) {
+        alert('CSRF token não encontrado!');
+        this.disabled = false;
+        return;
+      }
       fetch(`/patients/${patientId}/available_this_week`, {
         method: 'PATCH',
         headers: {
-          'X-CSRF-Token': document.querySelector('meta[name=\'csrf-token\']').content,
+          'X-CSRF-Token': csrfTokenMeta.content,
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
         body: JSON.stringify({ available_this_week: checked })
-      }).then(() => {
-        const feedback = document.getElementById(`saved-feedback-${patientId}`);
+      }).then(response => {
+        if (!response.ok) throw new Error('Erro ao salvar!');
         if (feedback) {
-          feedback.style.display = 'inline';
+          feedback.textContent = 'Salvo!';
+          feedback.style.color = '#16a34a'; // verde
           setTimeout(() => { feedback.style.display = 'none'; }, 1200);
         }
+      }).catch(() => {
+        this.checked = !originalState; // volta ao estado anterior
+        if (feedback) {
+          feedback.textContent = 'Erro ao salvar!';
+          feedback.style.color = '#dc2626'; // vermelho
+          setTimeout(() => { feedback.style.display = 'none'; }, 2000);
+        }
+        alert('Erro ao salvar disponibilidade. Tente novamente.');
+      }).finally(() => {
+        this.disabled = false;
+      });
+    });
+  });
+
+  document.querySelectorAll('.select-for-schedule-patient').forEach(function(checkbox) {
+    checkbox.addEventListener('change', function(event) {
+      console.log('Checkbox clicado!');
+      const patientId = this.dataset.patientId;
+      const checked = this.checked ? 1 : 0;
+      const previousValue = !this.checked;
+      const actionText = checked ? 'marcar' : 'desmarcar';
+      if (!confirm(`Você quer mesmo ${actionText} este paciente para a agenda?`)) {
+        // Se cancelar, volta ao estado anterior
+        this.checked = previousValue;
+        return;
+      }
+      fetch(`/patients/${patientId}/select_for_schedule`, {
+        method: 'PATCH',
+        headers: {
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ selected_for_schedule: checked })
       });
     });
   });
