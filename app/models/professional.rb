@@ -1,15 +1,25 @@
 class Professional < ApplicationRecord
   belongs_to :user, optional: true
   has_many :appointments, dependent: :destroy
-  has_many :availabilities, dependent: :destroy
   has_many :evolutions, through: :appointments
   has_many :professional_specialties, dependent: :destroy
   has_many :specialties, through: :professional_specialties
-  validates :name, presence: true
-  validates :available_days, presence: true
+  # validates :name, presence: { message: "O nome não pode ficar em branco" }
   validate :available_hours_format
+  validate :must_have_at_least_one_available_day
+  validate :name_presence_custom
 
   after_initialize :set_defaults
+
+  DIAS_PT_EN = {
+    'segunda-feira' => 'monday',
+    'terça-feira' => 'tuesday',
+    'quarta-feira' => 'wednesday',
+    'quinta-feira' => 'thursday',
+    'sexta-feira' => 'friday',
+    'sábado' => 'saturday',
+    'domingo' => 'sunday'
+  }
 
   # Garante que available_hours seja sempre um hash com os dias da semana
   def available_hours
@@ -41,6 +51,12 @@ class Professional < ApplicationRecord
     end
   end
 
+  def available_days=(value)
+    # Converte para inglês se vier em português
+    value = value.map { |d| DIAS_PT_EN[d] || d } if value.is_a?(Array)
+    super(value)
+  end
+
   def available_hours=(value)
     # Se vier string JSON, faz parse
     if value.is_a?(String)
@@ -58,6 +74,8 @@ class Professional < ApplicationRecord
     value = { 'all_days' => value } if value.is_a?(Array)
     # Se vier nil ou outro tipo, vira hash vazio
     value = {} unless value.is_a?(Hash)
+    # Converte as chaves para inglês se vierem em português
+    value = value.transform_keys { |k| DIAS_PT_EN[k] || k } if value.is_a?(Hash)
     super(value)
   end
 
@@ -65,5 +83,17 @@ class Professional < ApplicationRecord
 
   def set_defaults
     self.available_hours ||= {}
+  end
+
+  def must_have_at_least_one_available_day
+    if available_days.blank? || available_days.empty?
+      errors.add(:base, "É obrigatório selecionar pelo menos um dia disponível para o profissional.")
+    end
+  end
+
+  def name_presence_custom
+    if name.blank?
+      errors.add(:base, "O nome não pode ficar em branco")
+    end
   end
 end
