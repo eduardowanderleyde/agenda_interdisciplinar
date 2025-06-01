@@ -14,36 +14,27 @@ class Appointment < ApplicationRecord
   def no_time_conflict
     return unless professional && start_time && duration
 
-    end_time = start_time + duration.minutes
-    conflicts = Appointment.where(professional_id: professional_id)
-                           .where.not(id: id)
-                           .where("(start_time, (start_time + (duration * interval '1 minute'))) OVERLAPS (?, ?)", start_time, end_time)
-    return unless conflicts.exists?
-
-    errors.add(:base, 'Conflito de horário para este profissional.')
+    conflict_service = ConflictDetectionService.new
+    if conflict_service.conflict_for_professional?(professional, start_time, start_time + duration.minutes)
+      errors.add(:base, 'Conflito de horário para este profissional.')
+    end
   end
 
   def room_available
     return unless room && start_time && duration
 
-    end_time = start_time + duration.minutes
-    conflicts = Appointment.where(room_id: room_id)
-                           .where.not(id: id)
-                           .where("(start_time, (start_time + (duration * interval '1 minute'))) OVERLAPS (?, ?)", start_time, end_time)
-    return unless conflicts.exists?
-
-    errors.add(:base, 'Sala já está ocupada neste horário.')
+    conflict_service = ConflictDetectionService.new
+    if conflict_service.conflict_for_room?(room, start_time, start_time + duration.minutes)
+      errors.add(:base, 'Sala já está ocupada neste horário.')
+    end
   end
 
   def patient_available
     return unless patient && start_time && duration
 
-    end_time = start_time + duration.minutes
-    conflicts = Appointment.where(patient_id: patient_id)
-                           .where.not(id: id)
-                           .where("(start_time, (start_time + (duration * interval '1 minute'))) OVERLAPS (?, ?)", start_time, end_time)
-    return unless conflicts.exists?
-
-    errors.add(:base, 'O paciente já possui um agendamento neste horário.')
+    conflict_service = ConflictDetectionService.new
+    if conflict_service.conflict_for_patient?(patient, start_time, start_time + duration.minutes)
+      errors.add(:base, 'O paciente já possui um agendamento neste horário.')
+    end
   end
 end

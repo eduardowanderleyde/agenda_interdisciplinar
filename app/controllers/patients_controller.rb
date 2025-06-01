@@ -1,6 +1,6 @@
 class PatientsController < ApplicationController
   before_action :require_admin!
-  before_action :set_patient, only: %i[show edit update destroy update_available_this_week]
+  before_action :set_patient, only: %i[show edit update destroy select_for_schedule]
 
   # GET /patients or /patients.json
   def index
@@ -58,10 +58,11 @@ class PatientsController < ApplicationController
     end
   end
 
-  # PATCH /patients/:id/available_this_week
-  def update_available_this_week
-    value = ActiveModel::Type::Boolean.new.cast(params[:available_this_week])
-    @patient.update(available_this_week: value)
+  # PATCH /patients/:id/select_for_schedule
+  def select_for_schedule
+    @patient = Patient.find(params[:id])
+    value = ActiveModel::Type::Boolean.new.cast(params[:selected_for_schedule])
+    @patient.update(selected_for_schedule: value)
     head :ok
   end
 
@@ -74,6 +75,9 @@ class PatientsController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def patient_params
-    params.require(:patient).permit(:name, :birthdate, :diagnosis, :responsible, :observations, :available_this_week, specialty_ids: [])
+    params.require(:patient).permit(
+      :name, :birthdate, :diagnosis, :responsible, :observations, :available_this_week,
+      available_days: [], available_hours: {}, specialty_ids: []
+    )
   end
 end

@@ -20,7 +20,7 @@ pt-BR:
       professional: Profissional
     attributes:
       patient:
-        name: Nome
+        name: "Nome"
         birthdate: "Data de Nascimento"
         diagnosis: Diagnóstico
         responsible: Responsável
@@ -32,8 +32,13 @@ pt-BR:
         available_hours: "Horários Disponíveis"
         specialties: Especialidades
         default_session_duration: "Duração padrão da sessão"
+      appointment:
+        patient: "Paciente"
+        professional: "Profissional"
+        room: "Sala"
+        specialty: "Especialidade"
   errors:
-    format: "%{attribute} %{message}"
+    format: "%{message}"
     messages:
       blank: "não pode ficar em branco"
       invalid: "não é válido"
@@ -72,9 +77,14 @@ pt-BR:
               blank: "não pode ficar em branco"
         appointment:
           attributes:
+            patient:
+              required: "é obrigatório"
+            professional:
+              required: "é obrigatório"
+            room:
+              required: "é obrigatório"
             specialty:
-              required: "é obrigatório" 
-
+              required: "é obrigatório"
   devise:
     failure:
       unauthenticated: "Você precisa entrar ou se registrar antes de continuar."

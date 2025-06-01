@@ -3,23 +3,17 @@
   <% if @appointment.errors.any? %>
     <div class="mb-4 p-4 bg-red-100 text-red-800 rounded">
       <ul>
-        <% @appointment.errors.full_messages.each do |msg| %>
+        <% @appointment.errors.each do |error| %>
+          <% next if error.attribute == :base %>
+          <li>O campo <b><%= @appointment.class.human_attribute_name(error.attribute) %></b> <%= error.message %></li>
+        <% end %>
+        <% @appointment.errors[:base].each do |msg| %>
           <li><%= msg %></li>
         <% end %>
       </ul>
     </div>
   <% end %>
-  <%= simple_form_for(@appointment, html: { data: { controller: "appointment-form" }, class: "space-y-10" }) do |f| %>
-  <% if @appointment.errors.any? %>
-    <div class="bg-red-100 text-red-800 font-bold px-6 py-4 rounded-lg shadow mb-8 text-center">
-      <h3 class="mb-2">Erros ao salvar o agendamento:</h3>
-      <ul class="list-disc list-inside text-left mx-auto max-w-md">
-        <% @appointment.errors.full_messages.each do |msg| %>
-          <li><%= msg %></li>
-        <% end %>
-      </ul>
-    </div>
-  <% end %>
+  <%= simple_form_for(@appointment, html: { data: { turbo: false }, class: "space-y-10" }) do |f| %>
   <%= f.error_notification %>
   <%= f.error_notification message: f.object.errors[:base].to_sentence if f.object.errors[:base].present? %>
 
@@ -71,8 +65,9 @@
         <%= f.input :notes, input_html: { class: "w-full rounded-xl p-3 bg-white/80 text-gray-900 focus:ring-2 focus:ring-indigo-500" }, placeholder: "Observações gerais do atendimento", label: false %>
       </div>
     </div>
-    <div class="form-actions mt-12 flex justify-center">
+    <div class="form-actions mt-12 flex flex-col items-center space-y-4">
       <button type="submit" class="bg-indigo-600 text-white px-10 py-4 rounded-lg hover:bg-indigo-700 text-xl font-bold shadow transition">Salvar</button>
+      <%= link_to 'Voltar para agendamentos', appointments_path, class: 'mt-2 text-indigo-700 hover:underline font-semibold' %>
     </div>
   </div> <!-- Fecha o .form-inputs -->
 <% end %>

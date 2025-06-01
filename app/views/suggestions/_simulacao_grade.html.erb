@@ -1,15 +1,51 @@
-<% horas = []; t = Time.zone.parse('07:00'); while t <= Time.zone.parse('19:00'); horas << t.strftime('%H:%M'); t += 15.minutes; end %>
+<%# app/views/suggestions/_simulacao_grade.html.erb %>
+
+<%# 1) Gera array de horários de 07:00 a 19:00, em intervalos de 15 minutos %>
+<% horas = [] %>
+<% t = Time.zone.parse('07:00') %>
+<% while t <= Time.zone.parse('19:00') %>
+  <% horas << t.strftime('%H:%M') %>
+  <% t += 15.minutes %>
+<% end %>
+
+<%# 2) Define cor de fundo se for tabela de sugestão ou tabela “atual” %>
 <% cor_tabela = (defined?(tabela_tipo) && tabela_tipo == 'sugestao') ? 'bg-blue-50' : '' %>
+
+<%# 3) Se houver pacientes selecionados, exibe o card para cada um %>
+<% if defined?(selected_patients) && selected_patients.present? %>
+  <div class="flex flex-wrap gap-4 justify-center mb-8">
+    <% selected_patients.each do |patient| %>
+      <div class="bg-white rounded-xl shadow-lg border border-blue-200 p-6 min-w-[220px] max-w-xs flex flex-col items-center">
+        <div class="text-xl font-bold text-indigo-700 mb-2"><%= patient.name %></div>
+        <div class="text-gray-700 text-sm mb-1">Nascimento: <%= l(patient.birthdate, format: :default, locale: :'pt-BR') %></div>
+        <div class="text-gray-700 text-sm mb-1">Responsável: <%= patient.responsible.presence || '-' %></div>
+        <div class="text-gray-700 text-sm mb-1">Diagnóstico: <%= patient.diagnosis %></div>
+        <div class="text-gray-700 text-sm mb-1">Especialidades:
+          <ul class="list-disc ml-4">
+            <% patient.specialties.each do |spec| %>
+              <li><%= spec.name %></li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
+<%# 4) Exibe a tabela centralizada %>
 <div class="flex justify-center w-full">
   <div class="planner-full-table-container max-w-7xl mx-auto">
     <table class="planner-nicepage-table min-w-[900px] w-full border-separate border-spacing-0 <%= cor_tabela %> bg-white rounded-2xl shadow-2xl text-base">
       <thead>
         <tr>
-          <th class="py-4 px-6 border-b-2 bg-green-100 text-green-900 text-lg font-extrabold sticky left-0 z-10">Horário</th>
+          <th class="py-4 px-6 border-b-2 bg-green-100 text-green-900 text-lg font-extrabold sticky left-0 z-10">
+            Horário
+          </th>
           <% week_days.each do |dia| %>
             <th class="py-4 px-6 border-b-2 bg-blue-200 text-blue-900 text-lg font-extrabold">
               <div>
-                <%= I18n.l(dia, format: '%A', locale: :'pt-BR') %><br><span class="text-base font-bold"><%= dia.strftime('%d/%m') %></span>
+                <%= I18n.l(dia, format: '%A', locale: :'pt-BR') %><br>
+                <span class="text-base font-bold"><%= dia.strftime('%d/%m') %></span>
               </div>
             </th>
           <% end %>
@@ -18,22 +54,25 @@
       <tbody>
         <% horas.each do |hora| %>
           <tr>
-            <td class="py-4 px-6 border-b bg-green-50 font-semibold text-green-900 sticky left-0 z-10 align-middle"><%= hora %></td>
+            <td class="py-4 px-6 border-b bg-green-50 font-semibold text-green-900 sticky left-0 z-10 align-middle">
+              <%= hora %>
+            </td>
+
             <% week_days.each do |dia| %>
-              <% ag = grade[dia]&.dig(hora, selected_room.id) %>
+              <% ag = selected_room.present? ? grade[dia]&.dig(hora) : nil %>
               <td class="py-4 px-6 border-b align-top bg-white min-w-[180px] grade-droppable transition-colors hover:bg-blue-50"
-                data-dia="<%= dia.strftime('%Y-%m-%d') %>"
-                data-horario="<%= hora %>"
-                data-sala="<%= selected_room.id %>">
+                  data-dia="<%= dia.strftime('%Y-%m-%d') %>"
+                  data-horario="<%= hora %>"
+                  data-sala="<%= selected_room.present? ? selected_room.id : '' %>">
                 <% if ag.present? %>
-                  <div class="mb-3 p-3 rounded-xl bg-blue-100 border border-blue-300 text-sm text-center shadow-lg grade-card cursor-move transition-transform hover:scale-105 hover:shadow-2xl" 
-                    draggable="true" 
-                    data-dia="<%= dia.strftime('%Y-%m-%d') %>" 
-                    data-horario="<%= hora %>" 
-                    data-sala="<%= selected_room.id %>"
-                    data-patient-id="<%= ag[:patient_id] %>" 
-                    data-professional-id="<%= ag[:professional_id] %>" 
-                    data-specialty-id="<%= ag[:specialty_id] %>">
+                  <div class="mb-3 p-3 rounded-xl bg-blue-100 border border-blue-300 text-sm text-center shadow-lg grade-card cursor-move transition-transform hover:scale-105 hover:shadow-2xl"
+                       draggable="true"
+                       data-dia="<%= dia.strftime('%Y-%m-%d') %>"
+                       data-horario="<%= hora %>"
+                       data-sala="<%= selected_room.present? ? selected_room.id : '' %>"
+                       data-patient-id="<%= ag[:patient_id] %>"
+                       data-professional-id="<%= ag[:professional_id] %>"
+                       data-specialty-id="<%= ag[:specialty_id] %>">
                     <div class="text-gray-700 mb-1">Paciente: <%= ag[:patient_name] %></div>
                     <div class="text-gray-700">Profissional: <%= ag[:professional_name] %></div>
                   </div>
@@ -48,7 +87,11 @@
     </table>
   </div>
 </div>
+
+<%# 5) Botão para salvar alterações %>
 <div class="flex justify-center mt-6">
   <button id="btn-salvar-alteracoes"
-  class="bg-green-600 text-white px-8 py-3 text-lg font-bold rounded-xl shadow hover:bg-green-700 transition">Salvar alterações</button>
-</div> 
+          class="bg-green-600 text-white px-8 py-3 text-lg font-bold rounded-xl shadow hover:bg-green-700 transition">
+    Salvar alterações
+  </button>
+</div>

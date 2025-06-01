@@ -7,22 +7,24 @@ Rails.application.routes.draw do
   resources :professionals do
     member do
       get :available_times
+      get :working_hours
       get :schedule, to: 'professionals#schedule', as: :schedule
       patch :available_this_week, to: 'professionals#update_available_this_week'
     end
   end
 
-  resources :appointments, only: [:index, :show, :new, :create, :edit, :update, :destroy]
+  resources :appointments, only: %i[index show new create edit update destroy]
 
   resources :evolutions, only: %i[index show edit update destroy]
   resources :patients do
     member do
-      patch :available_this_week, to: 'patients#update_available_this_week'
+      patch :select_for_schedule
     end
   end
   resources :specialties
   resources :suggestions, only: [:index] do
     collection do
+      post :generate
       get :dias
       get :horarios
       get :especialidades

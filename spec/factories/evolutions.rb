@@ -1,7 +1,8 @@
 FactoryBot.define do
   factory :evolution do
     association :appointment
-    content { "Test evolution content" }
-    next_steps { "Test next steps" }
+    sequence(:description) { |n| "Evolução #{n}" }
+    sequence(:notes) { |n| "Observações da evolução #{n}" }
+    created_at { Time.zone.now }
   end
 end

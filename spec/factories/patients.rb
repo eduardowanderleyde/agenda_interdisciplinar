@@ -1,8 +1,12 @@
 FactoryBot.define do
   factory :patient do
-    name { "MyString" }
-    birthdate { "2025-05-06" }
-    diagnosis { "MyString" }
-    observations { "MyText" }
+    sequence(:name) { |n| "Paciente #{n}" }
+    sequence(:email) { |n| "paciente#{n}@exemplo.com" }
+    sequence(:phone) { |n| "(11) 9#{n.to_s.rjust(8, '0')}" }
+    available_this_week { true }
+
+    trait :unavailable do
+      available_this_week { false }
+    end
   end
 end

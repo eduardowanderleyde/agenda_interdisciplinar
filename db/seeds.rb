@@ -45,17 +45,27 @@ def nomes_profissionais
   ]
 end
 
+# Mapeamento de dias PT->EN
+DIAS_PT_EN = {
+  'segunda-feira' => 'monday',
+  'terça-feira' => 'tuesday',
+  'quarta-feira' => 'wednesday',
+  'quinta-feira' => 'thursday',
+  'sexta-feira' => 'friday',
+  'sábado' => 'saturday',
+  'domingo' => 'sunday'
+}
+
 nomes_profissionais.each do |nome|
   Professional.create!(
     name: nome,
-    available_days: %w[monday tuesday wednesday thursday friday],
+    available_days: ['segunda-feira', 'quarta-feira', 'sexta-feira'].map { |d| DIAS_PT_EN[d] || d },
     available_hours: {
-      'monday' => ['07:00 - 19:00'],
-      'tuesday' => ['07:00 - 19:00'],
-      'wednesday' => ['07:00 - 19:00'],
-      'thursday' => ['07:00 - 19:00'],
-      'friday' => ['07:00 - 19:00']
-    },
+      'segunda-feira' => ['08:00 - 12:00', '14:00 - 18:00'],
+      'quarta-feira' => ['08:00 - 12:00', '14:00 - 18:00'],
+      'sexta-feira' => ['08:00 - 12:00', '14:00 - 18:00']
+    }.transform_keys { |k| DIAS_PT_EN[k] || k },
+    default_session_duration: 30,
     available_this_week: true,
     specialties: all_specialties.sample(rand(2..3))
   )

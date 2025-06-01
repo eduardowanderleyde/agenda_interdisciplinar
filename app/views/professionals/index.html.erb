@@ -1,6 +1,4 @@
-<p class="text-green-700 bg-green-100 text-base px-6 py-3 rounded shadow mb-6 w-fit mx-auto font-medium"><%= notice %></p>
-
-<div class="w-full flex justify-center">
+<div class="w-full flex justify-center mt-12">
   <div class="w-full max-w-[1400px] mx-auto px-6 py-10 bg-white rounded-3xl border border-gray-200 shadow-xl text-gray-900">
     <div class="flex justify-between items-center mb-10">
       <h1 class="text-5xl font-bold text-gray-900">Profissionais</h1>
@@ -28,28 +26,56 @@
           'saturday' => 'Sábado', 'sat' => 'Sábado', 'sábado' => 'Sábado', 'b' => 'Sábado',
           'sunday' => 'Domingo', 'sun' => 'Domingo', 'domingo' => 'Domingo', 'd' => 'Domingo'
         } %>
+        <% dias_semana_lista = [
+          ['monday', 'Segunda-feira'],
+          ['tuesday', 'Terça-feira'],
+          ['wednesday', 'Quarta-feira'],
+          ['thursday', 'Quinta-feira'],
+          ['friday', 'Sexta-feira'],
+          ['saturday', 'Sábado'],
+          ['sunday', 'Domingo']
+        ] %>
         <% @professionals.each do |professional| %>
+          <% ah = professional.available_hours
+             if ah.is_a?(String)
+               begin
+                 ah = JSON.parse(ah) rescue {}
+               rescue
+                 ah = {}
+               end
+             end
+             ah = {} unless ah.is_a?(Hash)
+          %>
+          <% dias_com_horarios = dias_semana_lista.select { |dia_key, _| Array(ah[dia_key]).any? } %>
+          <% if dias_com_horarios.any? %>
+            <% dias_com_horarios.each_with_index do |(dia_key, dia_label), idx| %>
+              <tr>
+                <% if idx == 0 %>
+                  <td class="px-4 py-4 font-semibold text-gray-900" rowspan="<%= dias_com_horarios.size %>"><%= professional.name %></td>
+                <% end %>
+                <td class="px-4 py-4"><%= dia_label %></td>
+                <td class="px-4 py-4"><%= Array(ah[dia_key]).join(', ').gsub('-', 'às') %></td>
+                <% if idx == 0 %>
+                  <td class="px-4 py-4 text-center" rowspan="<%= dias_com_horarios.size %>">
+                    <div class="inline-flex items-center gap-2">
+                      <%= check_box_tag "available_this_week_prof_#{professional.id}", 1, professional.available_this_week, data: { professional_id: professional.id }, class: "available-this-week-prof-checkbox h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" %>
+                      <span class="text-green-600 text-xs font-semibold saved-feedback-prof" id="saved-feedback-prof-<%= professional.id %>" style="display:none;">Salvo!</span>
+                    </div>
+                  </td>
+                  <td class="px-4 py-4 text-center" rowspan="<%= dias_com_horarios.size %>">
+                    <div class="flex justify-center gap-3">
+                      <%= link_to 'Editar', edit_professional_path(professional), class: 'bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-bold shadow' %>
+                      <%= button_to 'Excluir', professional_path(professional), method: :delete, data: { confirm: 'Tem certeza?' }, class: 'bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-bold shadow' %>
+                    </div>
+                  </td>
+                <% end %>
+              </tr>
+            <% end %>
+          <% else %>
           <tr>
               <td class="px-4 py-4 font-semibold text-gray-900"><%= professional.name %></td>
-              <td class="px-4 py-4">
-              <% dias = (professional.available_days || []).map { |d| dias_semana[d.to_s.strip.downcase] || d }.uniq.join(', ') %>
-              <%= dias.presence || '-' %>
-            </td>
-              <td class="px-4 py-4">
-              <% dias_semana_lista = [
-                ['monday', 'Segunda'],
-                ['tuesday', 'Terça'],
-                ['wednesday', 'Quarta'],
-                ['thursday', 'Quinta'],
-                ['friday', 'Sexta']
-              ] %>
-              <% ah = professional.available_hours.is_a?(Hash) ? professional.available_hours : {} %>
-              <% horarios = dias_semana_lista.map do |dia_key, dia_label|
-                hs = (ah[dia_key] || [])
-                hs.any? ? "#{dia_label}: #{hs.join(', ')}" : nil
-              end.compact.join(' | ') %>
-              <%= horarios.presence || '-' %>
-            </td>
+              <td class="px-4 py-4">-</td>
+              <td class="px-4 py-4">-</td>
               <td class="px-4 py-4 text-center">
                 <div class="inline-flex items-center gap-2">
                   <%= check_box_tag "available_this_week_prof_#{professional.id}", 1, professional.available_this_week, data: { professional_id: professional.id }, class: "available-this-week-prof-checkbox h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" %>
@@ -63,6 +89,7 @@
               </div>
             </td>
           </tr>
+          <% end %>
         <% end %>
       </tbody>
     </table>

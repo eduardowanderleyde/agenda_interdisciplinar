@@ -22,8 +22,17 @@ export default class extends Controller {
         return response.json()
       })
       .then(data => {
+        // Sempre mostra todas as opções de horário (08:00 até 18:45 de 15 em 15 minutos)
         this.timeTarget.innerHTML = '<option value="">Selecione</option>'
-        data.times.forEach(time => {
+        let horarios = [];
+        let start = 8 * 60; // 08:00 em minutos
+        let end = 18 * 60 + 45; // 18:45 em minutos
+        for (let min = start; min <= end; min += 15) {
+          let h = Math.floor(min / 60);
+          let m = min % 60;
+          horarios.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+        }
+        horarios.forEach(time => {
           const option = document.createElement('option')
           option.value = time
           option.textContent = time

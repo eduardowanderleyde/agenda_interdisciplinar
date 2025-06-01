@@ -9,7 +9,7 @@
     </div>
   <% end %>
 
-  <%= simple_form_for(@professional) do |f| %>
+  <%= simple_form_for(@professional, html: { data: { turbo: false } }) do |f| %>
     <div class="form-inputs space-y-8">
       <div>
         <%= f.input :name,
@@ -44,14 +44,25 @@
             ['tuesday', 'Terça'],
             ['wednesday', 'Quarta'],
             ['thursday', 'Quinta'],
-            ['friday', 'Sexta']
+            ['friday', 'Sexta'],
+            ['saturday', 'Sábado'],
+            ['sunday', 'Domingo']
           ] %>
+          <% dias_alias = {
+            'monday' => ['monday', 'segunda', 'segunda-feira'],
+            'tuesday' => ['tuesday', 'terça', 'terça-feira'],
+            'wednesday' => ['wednesday', 'quarta', 'quarta-feira'],
+            'thursday' => ['thursday', 'quinta', 'quinta-feira'],
+            'friday' => ['friday', 'sexta', 'sexta-feira'],
+            'saturday' => ['saturday', 'sábado', 'sabado'],
+            'sunday' => ['sunday', 'domingo']
+          } %>
 
           <% dias_semana.each do |dia_key, dia_label| %>
             <div class="p-4 bg-white/20 rounded-xl shadow flex flex-col gap-2">
               <div class="flex items-center gap-2">
                 <input type="checkbox" name="professional[available_days][]" value="<%= dia_key %>"
-                  <%= @professional.available_days&.include?(dia_key) ? 'checked' : '' %>
+                  <%= dias_alias[dia_key].any? { |alias_key| @professional.available_hours&.key?(alias_key) && @professional.available_hours[alias_key].present? } ? 'checked' : '' %>
                   class="form-checkbox h-5 w-5 text-indigo-400 bg-white/20 border-white/30 rounded focus:ring-2 focus:ring-indigo-300">
                 <label class="font-bold text-indigo-100 text-base"><%= dia_label %></label>
               </div>
@@ -85,8 +96,7 @@
                      ah = { "all_days" => ah }
                    end
                    ah = {} unless ah.is_a?(Hash)
-                   lista = Array(ah[dia_key])
-                %>
+                   lista = dias_alias[dia_key].flat_map { |alias_key| Array(ah[alias_key]) }.uniq %>
                 <% lista.each do |intervalo| %>
                   <li class="flex items-center bg-green-100 text-green-900 rounded px-3 py-1 mb-1 font-semibold text-xs shadow-sm">
                     <span><%= intervalo %></span>

@@ -5,24 +5,14 @@ class AppointmentsController < ApplicationController
   # GET /appointments or /appointments.json
   def index
     @appointment = Appointment.new
+
+    # Refatoração para modularizar os filtros
     @pagy, @appointments = pagy(
       Appointment.includes(:patient, :professional, :room)
-                 .where(nil)
-                 .yield_self { |scope| params[:professional_id].present? ? scope.where(professional_id: params[:professional_id]) : scope }
-                 .yield_self { |scope| params[:patient_id].present? ? scope.where(patient_id: params[:patient_id]) : scope }
-                 .yield_self { |scope| params[:room_id].present? ? scope.where(room_id: params[:room_id]) : scope }
-                 .yield_self do |scope|
-                   if params[:date].present?
-                     date = begin
-                       Date.parse(params[:date])
-                     rescue StandardError
-                       nil
-                     end
-                     date ? scope.where(start_time: date.beginning_of_day..date.end_of_day) : scope
-                   else
-                     scope
-                   end
-                 end
+                 .yield_self { |scope| filter_by_professional(scope) }
+                 .yield_self { |scope| filter_by_patient(scope) }
+                 .yield_self { |scope| filter_by_room(scope) }
+                 .yield_self { |scope| filter_by_date(scope) }
                  .order(start_time: :desc)
     )
   end
@@ -43,29 +33,28 @@ class AppointmentsController < ApplicationController
   # POST /appointments or /appointments.json
   def create
     @appointment = Appointment.new(appointment_params)
+    conflict_service = ConflictDetectionService.new
 
-    respond_to do |format|
-      if @appointment.save
-        format.html { redirect_to @appointment, notice: 'Agendamento criado com sucesso.' }
-        format.json { render :show, status: :created, location: @appointment }
-      else
-        format.html { render :new, status: :unprocessable_entity }
-        format.json { render json: @appointment.errors, status: :unprocessable_entity }
-      end
+    if conflict_service.any_conflict?(@appointment)
+      flash.now[:alert] = 'Conflito de horário detectado.'
+      render :new
+    elsif @appointment.save
+      redirect_to @appointment, notice: 'Agendamento criado com sucesso.'
+    else
+      render :new
     end
   end
 
   # PATCH/PUT /appointments/1 or /appointments/1.json
   def update
-    respond_to do |format|
-      if @appointment.update(appointment_params)
-        format.html { redirect_to @appointment, notice: 'Agendamento atualizado com sucesso.' }
-        format.json { render :show, status: :ok, location: @appointment }
-        format.turbo_stream
-      else
-        format.html { render :edit, status: :unprocessable_entity }
-        format.json { render json: @appointment.errors, status: :unprocessable_entity }
-      end
+    conflict_service = ConflictDetectionService.new
+    if conflict_service.any_conflict?(@appointment)
+      flash.now[:alert] = 'Conflito de horário detectado.'
+      render :edit
+    elsif @appointment.update(appointment_params)
+      redirect_to @appointment, notice: 'Agendamento atualizado com sucesso.'
+    else
+      render :edit
     end
   end
 
@@ -83,6 +72,7 @@ class AppointmentsController < ApplicationController
   def batch_update
     begin
       ags = params[:agendamentos] || []
+      conflict_service = ConflictDetectionService.new
       conflitos = []
 
       # Validação prévia de todos os agendamentos
@@ -107,36 +97,8 @@ class AppointmentsController < ApplicationController
         Appointment.where(start_time: semana).delete_all
       end
 
-      ags.each do |ag|
-        inicio = Time.zone.parse(ag["start_time"])
-        fim = inicio + 30.minutes
-
-        conflito = Appointment.exists?([
-          "(room_id = :room AND ((start_time, (start_time + (duration * interval '1 minute'))) OVERLAPS (:inicio, :fim))) OR\n \
-           (professional_id = :prof AND ((start_time, (start_time + (duration * interval '1 minute'))) OVERLAPS (:inicio, :fim))) OR\n \
-           (patient_id = :pac AND ((start_time, (start_time + (duration * interval '1 minute'))) OVERLAPS (:inicio, :fim)))",
-          {
-            room: ag["room_id"],
-            prof: ag["professional_id"],
-            pac: ag["patient_id"],
-            inicio: inicio,
-            fim: fim
-          }
-        ])
-
-        if conflito
-          conflitos << {
-            patient_id: ag["patient_id"],
-            professional_id: ag["professional_id"],
-            room_id: ag["room_id"],
-            start_time: ag["start_time"],
-            specialty_id: ag["specialty_id"],
-            motivo: "Conflito de sala, profissional ou paciente no horário"
-          }
-          next
-        end
-
-        Appointment.create!(
+      appointments = ags.map do |ag|
+        Appointment.new(
           patient_id: ag["patient_id"],
           professional_id: ag["professional_id"],
           room_id: ag["room_id"],
@@ -146,10 +108,14 @@ class AppointmentsController < ApplicationController
         )
       end
 
+      conflitos = conflict_service.batch_conflicts(appointments)
+
       if conflitos.any?
         render json: { status: 'erro', conflitos: conflitos }, status: 422
         return
       end
+
+      appointments.each(&:save!)
 
       head :ok
     rescue => e
@@ -168,5 +134,51 @@ class AppointmentsController < ApplicationController
   def appointment_params
     params.require(:appointment).permit(:patient_id, :professional_id, :room_id, :start_time, :duration, :status,
                                         :notes, :specialty_id)
+  end
+
+  # Filtro por profissional
+  def filter_by_professional(scope)
+    if params[:professional_id].present?
+      scope.where(professional_id: params[:professional_id])
+    else
+      scope
+    end
+  end
+
+  # Filtro por paciente
+  def filter_by_patient(scope)
+    if params[:patient_id].present?
+      scope.where(patient_id: params[:patient_id])
+    else
+      scope
+    end
+  end
+
+  # Filtro por sala
+  def filter_by_room(scope)
+    if params[:room_id].present?
+      scope.where(room_id: params[:room_id])
+    else
+      scope
+    end
+  end
+
+  # Filtro por data
+  def filter_by_date(scope)
+    if params[:date].present?
+      begin
+        date = Date.parse(params[:date])
+      rescue ArgumentError
+        date = nil
+      end
+
+      if date
+        scope.where(start_time: date.beginning_of_day..date.end_of_day)
+      else
+        scope
+      end
+    else
+      scope
+    end
   end
 end

@@ -24,38 +24,26 @@ class ProfessionalsController < ApplicationController
   def create
     @professional = Professional.new(professional_params)
 
-    respond_to do |format|
-      if @professional.save
-        format.html { redirect_to @professional, notice: 'Profissional criado com sucesso.' }
-        format.json { render :show, status: :created, location: @professional }
-      else
-        format.html { render :new, status: :unprocessable_entity }
-        format.json { render json: @professional.errors, status: :unprocessable_entity }
-      end
+    if @professional.save
+      redirect_to @professional, notice: 'Profissional criado com sucesso.'
+    else
+      render :new
     end
   end
 
   # PATCH/PUT /professionals/1 or /professionals/1.json
   def update
-    respond_to do |format|
-      if @professional.update(professional_params)
-        format.html { redirect_to @professional, notice: 'Profissional atualizado com sucesso.' }
-        format.json { render :show, status: :ok, location: @professional }
-      else
-        format.html { render :edit, status: :unprocessable_entity }
-        format.json { render json: @professional.errors, status: :unprocessable_entity }
-      end
+    if @professional.update(professional_params)
+      redirect_to @professional, notice: 'Profissional atualizado com sucesso.'
+    else
+      render :edit
     end
   end
 
   # DELETE /professionals/1 or /professionals/1.json
   def destroy
     @professional.destroy!
-
-    respond_to do |format|
-      format.html { redirect_to professionals_path, status: :see_other, notice: 'Profissional excluído com sucesso.' }
-      format.json { head :no_content }
-    end
+    redirect_to professionals_path, status: :see_other, notice: 'Profissional excluído com sucesso.'
   end
 
   def schedule
@@ -80,36 +68,10 @@ class ProfessionalsController < ApplicationController
     begin
       date = Date.parse(params[:date])
       duration = params[:duration].to_i
-      available_hours = @professional.available_hours
-      day_of_week = date.strftime('%A').downcase
-      return render json: { times: [] } unless @professional.available_days.include?(day_of_week)
-
-      booked_times = Appointment.where(professional: @professional)
-                                .where('DATE(start_time) = ?', date)
-                                .pluck(:start_time, :duration)
-                                .map { |start, dur| (start..start + dur.minutes) }
-
-      available_rooms = Room.where(active: true)
-      booked_rooms = Appointment.where(room: available_rooms)
-                                .where('DATE(start_time) = ?', date)
-                                .pluck(:start_time, :duration, :room_id)
-                                .map { |start, dur, room_id| [start..start + dur.minutes, room_id] }
-
-      available_times = []
-      available_hours.each do |hour|
-        start_time = Time.zone.parse("#{date} #{hour}")
-        end_time = start_time + duration.minutes
-
-        next if booked_times.any? { |range| range.overlaps?(start_time..end_time) }
-
-        room_available = available_rooms.any? do |room|
-          room_bookings = booked_rooms.select { |_, room_id| room_id == room.id }
-          room_bookings.none? { |range, _| range.overlaps?(start_time..end_time) }
-        end
-
-        available_times << hour if room_available
-      end
-
+      
+      availability_service = ProfessionalAvailabilityService.new(@professional)
+      available_times = availability_service.available_times_for(date, duration)
+      
       render json: { times: available_times }
     rescue StandardError => e
       Rails.logger.error("Erro em available_times: #{e.message}\n#{e.backtrace.join("\n")}")
@@ -125,6 +87,31 @@ class ProfessionalsController < ApplicationController
     head :ok
   end
 
+  def working_hours
+    unless params[:date].present?
+      return render json: { times: [], error: "Parâmetro obrigatório 'date' ausente" }, status: :ok
+    end
+    begin
+      date = Date.parse(params[:date])
+      day_of_week = date.strftime('%A').downcase
+      hours = @professional.available_hours[day_of_week] || []
+      times = []
+      hours.each do |interval|
+        ini, fim = interval.split(' - ')
+        current = Time.zone.parse("#{date} #{ini}")
+        end_time = Time.zone.parse("#{date} #{fim}")
+        while current < end_time
+          times << current.strftime('%H:%M')
+          current += 30.minutes
+        end
+      end
+      render json: { times: times }
+    rescue StandardError => e
+      Rails.logger.error("Erro em working_hours: #{e.message}\n#{e.backtrace.join("\n")}")
+      render json: { times: [], error: e.message }, status: :ok
+    end
+  end
+
   private
 
   # Use callbacks to share common setup or constraints between actions.
@@ -134,6 +121,15 @@ class ProfessionalsController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def professional_params
+    dias_pt_en = {
+      'segunda-feira' => 'monday',
+      'terça-feira' => 'tuesday',
+      'quarta-feira' => 'wednesday',
+      'quinta-feira' => 'thursday',
+      'sexta-feira' => 'friday',
+      'sábado' => 'saturday',
+      'domingo' => 'sunday'
+    }
     params.require(:professional).permit(
       :name,
       :default_session_duration,
@@ -142,6 +138,14 @@ class ProfessionalsController < ApplicationController
       specialty_ids: []
     ).tap do |whitelisted|
       whitelisted[:available_days]&.reject!(&:blank?)
+      # Conversão automática de dias em português para inglês
+      if whitelisted[:available_days].present?
+        whitelisted[:available_days] = whitelisted[:available_days].map { |d| dias_pt_en[d] || d }
+      end
+      # Também converte as chaves de available_hours, se necessário
+      if whitelisted[:available_hours].is_a?(Hash)
+        whitelisted[:available_hours] = whitelisted[:available_hours].transform_keys { |k| dias_pt_en[k] || k }
+      end
     end
   end
 end

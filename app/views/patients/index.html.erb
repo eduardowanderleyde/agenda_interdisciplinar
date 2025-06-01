@@ -90,16 +90,18 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  document.querySelectorAll('.select-for-schedule-patient').forEach(function(checkbox) {
-    checkbox.addEventListener('change', function(event) {
+  // Event delegation para garantir que funcione após recarregamentos parciais
+  document.body.addEventListener('change', function(event) {
+    if (event.target.classList.contains('select-for-schedule-patient')) {
       console.log('Checkbox clicado!');
-      const patientId = this.dataset.patientId;
-      const checked = this.checked ? 1 : 0;
-      const previousValue = !this.checked;
+      const checkbox = event.target;
+      const patientId = checkbox.dataset.patientId;
+      const checked = checkbox.checked ? 1 : 0;
+      const previousValue = !checkbox.checked;
       const actionText = checked ? 'marcar' : 'desmarcar';
       if (!confirm(`Você quer mesmo ${actionText} este paciente para a agenda?`)) {
         // Se cancelar, volta ao estado anterior
-        this.checked = previousValue;
+        checkbox.checked = previousValue;
         return;
       }
       fetch(`/patients/${patientId}/select_for_schedule`, {
@@ -111,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         body: JSON.stringify({ selected_for_schedule: checked })
       });
-    });
+    }
   });
 });
 </script>
