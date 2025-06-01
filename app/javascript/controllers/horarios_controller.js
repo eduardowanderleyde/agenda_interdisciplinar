@@ -18,14 +18,30 @@ export default class extends Controller {
     }
   }
 
-  // Aceita 16h, 16:00, 08h, 08:00
+  // Aceita 14, 14h, 14:00, 12:12, 12h12, 0715, 7, 7h, 7:15, etc.
   parseHour(str) {
-    const match = str.match(/^(\d{2})(h|:)?(\d{2})?$/)
-    if (!match) return null
-    let hour = match[1]
-    let min = match[3] || '00'
-    if (min.length === 1) min = '0' + min
-    return `${hour}:${min}`
+    str = str.trim().toLowerCase();
+    // 7 ou 07 => 07:00
+    if (/^\d{1,2}$/.test(str)) return str.padStart(2, '0') + ':00';
+    // 7h ou 07h => 07:00
+    if (/^\d{1,2}h$/.test(str)) return str.replace('h', '').padStart(2, '0') + ':00';
+    // 0715 => 07:15
+    if (/^\d{4}$/.test(str)) return str.slice(0,2) + ':' + str.slice(2,4);
+    // 7:15 ou 07:15 => 07:15
+    if (/^\d{1,2}:\d{2}$/.test(str)) {
+      let [h, m] = str.split(':');
+      return h.padStart(2, '0') + ':' + m;
+    }
+    // 7h15 ou 07h15 => 07:15
+    if (/^\d{1,2}h\d{2}$/.test(str)) {
+      let [h, m] = str.split('h');
+      return h.padStart(2, '0') + ':' + m;
+    }
+    // 14: => 14:00
+    if (/^\d{1,2}:$/.test(str)) return str.replace(':', '').padStart(2, '0') + ':00';
+    // 14h: => 14:00
+    if (/^\d{1,2}h:$/.test(str)) return str.replace('h:', '').padStart(2, '0') + ':00';
+    return null;
   }
 
   addIntervalo(e) {
@@ -119,8 +135,13 @@ export default class extends Controller {
   adicionarHorario(event) {
     const btn = event.currentTarget;
     const dia = btn.getAttribute('data-dia');
-    const diaCheckbox = document.querySelector(`input[name="professional[available_days][]"][value="${dia}"]`);
-    if (!diaCheckbox.checked) {
+    // Detecta se é paciente ou profissional
+    let prefix = 'professional';
+    if (this.form && this.form.getAttribute('action') && this.form.getAttribute('action').includes('patients')) {
+      prefix = 'patient';
+    }
+    const diaCheckbox = document.querySelector(`input[name="${prefix}[available_days][]"][value="${dia}"]`);
+    if (diaCheckbox && !diaCheckbox.checked) {
       this.showToast('Marque o checkbox do dia primeiro!', '#f87171');
       return;
     }
@@ -149,7 +170,7 @@ export default class extends Controller {
     const li = document.createElement('li');
     li.className = 'flex items-center bg-green-100 text-green-900 rounded px-3 py-1 mb-1 font-semibold text-xs shadow-sm';
     li.innerHTML = `<span>${texto}</span>
-      <input type="hidden" name="professional[available_hours][${dia}][]" value="${texto}">
+      <input type="hidden" name="${prefix}[available_hours][${dia}][]" value="${texto}">
       <button type="button" onclick="this.parentElement.remove()" class="ml-2 text-red-600 hover:text-red-800 font-bold text-lg bg-transparent border-none cursor-pointer">&times;</button>`;
     lista.appendChild(li);
     this.showToast('Horário adicionado com sucesso!', '#22c55e');
