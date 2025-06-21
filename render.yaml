@@ -1,0 +1,56 @@
+# render.yaml
+# Blueprint para deploy da aplicação Rails no Render.
+# Visite https://render.com/docs/blueprint-spec para mais detalhes.
+
+databases:
+  # Banco de dados PostgreSQL
+  - name: agenda-interdisciplinar-db
+    databaseName: agenda_interdisciplinar_prod
+    user: agenda_interdisciplinar_user
+    plan: free # Mude para um plano pago em produção
+
+services:
+  # Instância do Redis para Sidekiq e Action Cable
+  - name: agenda-interdisciplinar-redis
+    type: redis
+    plan: free # Mude para um plano pago em produção
+
+  # Serviço web principal da aplicação Rails
+  - name: agenda-interdisciplinar-web
+    type: web
+    env: docker
+    plan: free # Mude para um plano pago em produção
+    healthCheckPath: /up
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: agenda-interdisciplinar-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: agenda-interdisciplinar-redis
+          type: redis
+          property: connectionString
+      - key: RAILS_MASTER_KEY
+        sync: false # Adicione esta chave secreta no dashboard do Render
+      - key: RAILS_SERVE_STATIC_FILES
+        value: true
+
+  # Worker para rodar o Sidekiq
+  - name: agenda-interdisciplinar-worker
+    type: worker
+    env: docker
+    plan: free # Mude para um plano pago em produção
+    startCommand: "bundle exec sidekiq" # Comando para iniciar o Sidekiq
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: agenda-interdisciplinar-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: agenda-interdisciplinar-redis
+          type: redis
+          property: connectionString
+      - key: RAILS_MASTER_KEY
+        sync: false # Adicione esta chave secreta no dashboard do Render 
