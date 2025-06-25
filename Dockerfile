@@ -50,13 +50,13 @@ RUN bundle exec bootsnap precompile app/ lib/
 ARG SKIP_ASSETS_PRECOMPILE
 ENV SKIP_ASSETS_PRECOMPILE=${SKIP_ASSETS_PRECOMPILE}
 
-RUN bash -c ' \
+RUN echo "SKIP_ASSETS_PRECOMPILE=$SKIP_ASSETS_PRECOMPILE" && \
   if [ "$SKIP_ASSETS_PRECOMPILE" = "1" ]; then \
     echo "Skipping assets:precompile"; \
   else \
     echo "Running assets:precompile..."; \
-    ./bin/rails assets:precompile --trace || exit $?; \
-  fi'
+    ./bin/rails assets:precompile --trace; \
+  fi
 
 
 
