@@ -53,7 +53,7 @@ ENV SKIP_ASSETS_PRECOMPILE=${SKIP_ASSETS_PRECOMPILE}
 RUN if [ "$SKIP_ASSETS_PRECOMPILE" = "1" ]; then \
   echo "Skipping assets:precompile"; \
   else \
-  ./bin/rails assets:precompile; \
+  ./bin/rails assets:precompile --trace; \
 fi
 
 
