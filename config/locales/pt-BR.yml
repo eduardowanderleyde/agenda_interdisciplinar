@@ -38,7 +38,7 @@ pt-BR:
         room: "Sala"
         specialty: "Especialidade"
   errors:
-    format: "%{message}"
+    format: "O campo %{attribute} %{message}"
     messages:
       blank: "não pode ficar em branco"
       invalid: "não é válido"
@@ -84,7 +84,7 @@ pt-BR:
             room:
               required: "é obrigatório"
             specialty:
-              required: "é obrigatório"
+              required: "é obrigatório" 
   devise:
     failure:
       unauthenticated: "Você precisa entrar ou se registrar antes de continuar."

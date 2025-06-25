@@ -36,12 +36,14 @@ services:
       - key: RAILS_SERVE_STATIC_FILES
         value: true
 
-  # Worker para rodar o Sidekiq
   - name: agenda-interdisciplinar-worker
     type: worker
     env: docker
     plan: free # Mude para um plano pago em produção
     startCommand: "bundle exec sidekiq" # Comando para iniciar o Sidekiq
+    build:
+      args:
+        - SKIP_ASSETS_PRECOMPILE=1
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -53,4 +55,4 @@ services:
           type: redis
           property: connectionString
       - key: RAILS_MASTER_KEY
-        sync: false # Adicione esta chave secreta no dashboard do Render 
+        sync: false # Adicione esta chave secreta no dashboard do Render

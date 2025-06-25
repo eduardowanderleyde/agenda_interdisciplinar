@@ -140,7 +140,7 @@ class ProfessionalsController < ApplicationController
       whitelisted[:available_days]&.reject!(&:blank?)
       # Conversão automática de dias em português para inglês
       if whitelisted[:available_days].present?
-        whitelisted[:available_days] = whitelisted[:available_days].map { |d| dias_pt_en[d] || d }
+      whitelisted[:available_days] = whitelisted[:available_days].map { |d| dias_pt_en[d] || d }
       end
       # Também converte as chaves de available_hours, se necessário
       if whitelisted[:available_hours].is_a?(Hash)
