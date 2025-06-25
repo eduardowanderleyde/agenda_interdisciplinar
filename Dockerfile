@@ -50,9 +50,12 @@ RUN bundle exec bootsnap precompile app/ lib/
 ARG SKIP_ASSETS_PRECOMPILE
 ENV SKIP_ASSETS_PRECOMPILE=${SKIP_ASSETS_PRECOMPILE}
 
-RUN if [ "$SKIP_ASSETS_PRECOMPILE" != "1" ]; then \
+RUN if [ "$SKIP_ASSETS_PRECOMPILE" = "1" ]; then \
+  echo "Skipping assets:precompile"; \
+else \
   SECRET_KEY_BASE_DUMMY=1 RAILS_DATABASE_URL=dummy:// ./bin/rails assets:precompile; \
 fi
+
 
 
 # Final stage for app image
