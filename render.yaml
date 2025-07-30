@@ -16,7 +16,7 @@ services:
     plan: free # Mude para um plano pago em produção
 
   # Serviço web principal da aplicação Rails
-  - name: agenda-interdisciplinar-web
+  - name: agenda-interdisciplinar
     type: web
     env: docker
     plan: free # Mude para um plano pago em produção
