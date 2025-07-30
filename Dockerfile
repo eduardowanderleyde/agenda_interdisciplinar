@@ -12,7 +12,11 @@ ENV RAILS_ENV="production" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
     BUNDLE_WITHOUT="development" \
-    NODE_OPTIONS="--openssl-legacy-provider"
+    NODE_OPTIONS="--openssl-legacy-provider" \
+    # Force PostgreSQL to use TCP instead of socket
+    PGHOST="" \
+    PGPORT="" \
+    PGDATABASE=""
 
 # Throw-away build stage to reduce size of final image
 FROM base as build
