@@ -1,0 +1,49 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+/* Customização Pagy Bootstrap Pagination para Tailwind */
+.page-item .page-link {
+  background-color: #4f46e5 !important; /* Indigo-700 */
+  color: #fff !important;
+  border-radius: 0.5rem !important;
+  border: none !important;
+  margin: 0 2px;
+  transition: background 0.2s;
+}
+.page-item .page-link:hover {
+  background-color: #6366f1 !important; /* Indigo-500 */
+  color: #fff !important;
+}
+.page-item.active .page-link {
+  background-color: #6366f1 !important; /* Indigo-500 */
+  color: #fff !important;
+}
+.page-item.disabled .page-link {
+  background-color: #e0e7ff !important; /* Indigo-100 */
+  color: #a5b4fc !important;
+  cursor: not-allowed;
+}
+
+/* Forçar cor do botão Salvar do formulário de agendamento */
+form .bg-indigo-600 {
+  background-color: #4f46e5 !important;
+  color: #fff !important;
+}
+form .bg-indigo-600:hover {
+  background-color: #4338ca !important;
+}
+
+input[type="submit"].bg-indigo-600 {
+  background-color: #4f46e5 !important;
+  color: #fff !important;
+  border-radius: 0.5rem !important;
+  font-weight: bold;
+  padding: 0.75rem 2rem;
+  font-size: 1.125rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  transition: background 0.2s;
+}
+input[type="submit"].bg-indigo-600:hover {
+  background-color: #4338ca !important;
+}
