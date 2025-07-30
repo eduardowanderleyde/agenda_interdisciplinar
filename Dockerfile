@@ -46,20 +46,8 @@ COPY . .
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/
 
-# Precompiling assets for production without requiring secret RAILS_MASTER_KEY
-ARG SKIP_ASSETS_PRECOMPILE=0
-ENV SKIP_ASSETS_PRECOMPILE=$SKIP_ASSETS_PRECOMPILE
-
-
-RUN echo "SKIP_ASSETS_PRECOMPILE=$SKIP_ASSETS_PRECOMPILE" && \
-  if [ "$SKIP_ASSETS_PRECOMPILE" = "1" ]; then \
-    echo "Skipping assets:precompile"; \
-  else \
-    echo "Running assets:precompile..."; \
-    ./bin/rails assets:precompile --trace; \
-  fi
-
-
+# Skip assets precompilation during build - will be done at runtime
+RUN echo "Skipping assets precompilation during build - will be done at runtime"
 
 # Final stage for app image
 FROM base
@@ -78,7 +66,7 @@ RUN useradd rails --create-home --shell /bin/bash && \
     chown -R rails:rails db log storage tmp
 USER rails:rails
 
-# Entrypoint prepares the database.
+# Entrypoint prepares the database and compiles assets
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 
 # Start the server by default, this can be overwritten at runtime
