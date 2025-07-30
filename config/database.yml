@@ -79,5 +79,5 @@ test:
 #
 production:
   <<: *default
-  # Use DATABASE_URL provided by Render
-  # Rails will automatically use DATABASE_URL if present
+  # Force Rails to use DATABASE_URL instead of socket
+  url: <%= ENV['DATABASE_URL'] %>
