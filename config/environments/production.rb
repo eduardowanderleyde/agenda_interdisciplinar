@@ -94,4 +94,12 @@ Rails.application.configure do
   # ]
   # Skip DNS rebinding protection for the default health check endpoint.
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+
+  # Force database configuration to use DATABASE_URL
+  if ENV['DATABASE_URL'].present?
+    config.after_initialize do
+      ActiveRecord::Base.connection_pool.disconnect! if ActiveRecord::Base.connected?
+      ActiveRecord::Base.establish_connection(ENV['DATABASE_URL'])
+    end
+  end
 end

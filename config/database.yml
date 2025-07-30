@@ -81,5 +81,7 @@ production:
   <<: *default
   # Force Rails to use DATABASE_URL instead of socket
   url: <%= ENV['DATABASE_URL'] %>
-  # Disable socket connection
+  # Disable socket connection and force TCP
   host: <%= ENV['DATABASE_URL'] ? nil : 'localhost' %>
+  # Ensure we don't use localhost
+  port: <%= ENV['DATABASE_URL'] ? nil : 5432 %>
