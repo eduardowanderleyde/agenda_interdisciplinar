@@ -76,9 +76,9 @@ COPY --from=build /rails /rails
 
 # Run and own only the runtime files as a non-root user for security
 RUN useradd rails --create-home --shell /bin/bash && \
-    chown -R rails:rails db log storage tmp app/assets/builds && \
-    mkdir -p app/assets/builds && \
-    chown -R rails:rails app/assets/builds
+    chown -R rails:rails db log storage tmp app/assets/builds public && \
+    mkdir -p app/assets/builds public/assets && \
+    chown -R rails:rails app/assets/builds public/assets
 USER rails:rails
 
 # Entrypoint prepares the database and compiles assets
