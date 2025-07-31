@@ -50,8 +50,8 @@ COPY . .
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/
 
-# Skip assets precompilation during build - will be done at runtime
-RUN echo "Skipping assets precompilation during build - will be done at runtime"
+# Compile assets during build
+RUN bundle exec rails assets:precompile
 
 # Final stage for app image
 FROM base
@@ -61,24 +61,13 @@ RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y curl libvips postgresql-client && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# Install Node.js and Yarn in the final image
-ARG NODE_VERSION=23.3.0
-ARG YARN_VERSION=1.22.22
-ENV PATH=/usr/local/node/bin:$PATH
-RUN curl -sL https://github.com/nodenv/node-build/archive/master.tar.gz | tar xz -C /tmp/ && \
-    /tmp/node-build-master/bin/node-build "${NODE_VERSION}" /usr/local/node && \
-    npm install -g yarn@$YARN_VERSION && \
-    rm -rf /tmp/node-build-master
-
 # Copy built artifacts: gems, application
 COPY --from=build /usr/local/bundle /usr/local/bundle
 COPY --from=build /rails /rails
 
 # Run and own only the runtime files as a non-root user for security
 RUN useradd rails --create-home --shell /bin/bash && \
-    chown -R rails:rails db log storage tmp app/assets/builds public && \
-    mkdir -p app/assets/builds public/assets && \
-    chown -R rails:rails app/assets/builds public/assets
+    chown -R rails:rails db log storage tmp public
 USER rails:rails
 
 # Entrypoint prepares the database and compiles assets

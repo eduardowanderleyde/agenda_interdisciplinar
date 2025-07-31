@@ -1,18 +1,8 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
+set -e
 
-# If running the rails server then create or migrate existing database
-if [ "${1}" == "./bin/rails" ] && [ "${2}" == "server" ]; then
-  # Only run db:prepare if DATABASE_URL is available
-  if [ -n "$DATABASE_URL" ]; then
-    echo "DATABASE_URL found, preparing database..."
-    ./bin/rails db:prepare
-  else
-    echo "No DATABASE_URL found, skipping database preparation..."
-  fi
-  
-  # Compile assets at runtime when credentials are available
-  echo "Compiling assets..."
-  ./bin/rails assets:precompile
-fi
+# Remove a potentially pre-existing server.pid for Rails.
+rm -f /rails/tmp/pids/server.pid
 
-exec "${@}"
+# Then exec the container's main process (what's set as CMD in the Dockerfile).
+exec "$@"
