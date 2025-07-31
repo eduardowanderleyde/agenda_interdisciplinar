@@ -2,6 +2,12 @@
 
 # If running the rails server then create or migrate existing database
 if [ "${1}" == "./bin/rails" ] && [ "${2}" == "server" ]; then
+  # Force Rails to use DATABASE_URL before any database operations
+  if [ -n "$DATABASE_URL" ]; then
+    echo "Using DATABASE_URL for database connection..."
+    export RAILS_DATABASE_URL="$DATABASE_URL"
+  fi
+  
   ./bin/rails db:prepare
   
   # Compile assets at runtime when credentials are available
