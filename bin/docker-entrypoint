@@ -14,9 +14,9 @@ if [ "${1}" == "./bin/rails" ] && [ "${2}" == "server" ]; then
     echo "No DATABASE_URL found, skipping database preparation..."
   fi
   
-  # Compile assets at runtime when credentials are available
-  echo "Compiling assets..."
-  ./bin/rails assets:precompile
+  # Skip assets compilation for now to get deploy working
+  echo "Skipping assets compilation for now..."
+  # ./bin/rails assets:precompile
 fi
 
 # Then exec the container's main process (what's set as CMD in the Dockerfile).
