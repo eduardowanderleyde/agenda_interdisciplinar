@@ -1,9 +1,10 @@
 source 'https://rubygems.org'
+git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 ruby '3.2.2'
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
-gem 'rails', '~> 7.1.5', '>= 7.1.5.1'
+gem 'rails', '~> 7.1.5'
 
 # The original asset pipeline for Rails [https://github.com/rails/sprockets-rails]
 gem 'sprockets-rails'
@@ -11,75 +12,95 @@ gem 'sprockets-rails'
 # Use postgresql as the database for Active Record
 gem 'pg', '~> 1.1'
 
-gem 'pry-rails'
-
 # Use the Puma web server [https://github.com/puma/puma]
 gem 'puma', '>= 5.0'
 
-# Bundle and transpile JavaScript [https://github.com/rails/jsbundling-rails]
-gem 'jsbundling-rails'
+# Use JavaScript bundling [https://github.com/rails/jsbundling-rails]
+# gem "jsbundling-rails"
 
-# Hotwire's SPA-like page accelerator [https://turbo.hotwired.dev]
+# Use Hotwire/Turbo for navigation and UJS [https://turbo.hotwired.dev]
 gem 'turbo-rails'
 
-# Hotwire's modest JavaScript framework [https://stimulus.hotwired.dev]
+# Use Stimulus for JavaScript [https://stimulus.hotwired.dev]
 gem 'stimulus-rails'
 
-# Bundle and process CSS [https://github.com/rails/cssbundling-rails]
+# Use CSS bundling [https://github.com/rails/cssbundling-rails]
 gem 'cssbundling-rails'
 
-# Build JSON APIs with ease [https://github.com/rails/jbuilder]
-gem 'jbuilder'
-
-# Use Redis adapter to run Action Cable in production
-gem 'redis'
-
-# Use Kredis to get higher-level data types in Redis [https://github.com/rails/kredis]
-gem 'kredis'
+# Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
+# gem "bcrypt", "~> 3.1.7"
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
-gem 'tzinfo-data', platforms: %i[windows jruby]
+# Uncomment the following line if you're running Rails
+# on a 64-bit Windows or 64-bit Linux.
+# gem "tzinfo-data", platforms: %i[ mingw mswin x64_mingw jruby ]
 
 # Reduces boot times through caching; required in config/boot.rb
 gem 'bootsnap', require: false
 
-# Autenticação e Autorização
-gem 'devise'
-gem 'pundit'
+# Use jbuilder for JSON APIs [https://github.com/rails/jbuilder]
+gem 'jbuilder'
 
-# Interface e Interatividade
-gem 'heroicon'
-gem 'simple_calendar'
-gem 'tailwindcss-rails'
-gem 'view_component'
+# Use Redis adapter to run Action Cable in production
+gem 'redis', '~> 5.0'
 
-# Formulários e Validações
-gem 'simple_form'
-gem 'validates_timeliness'
+# Use Kredis to get higher-level data types in Redis [https://github.com/rails/kredis]
+gem 'kredis'
 
-# Background Jobs
-gem 'sidekiq'
+# Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
+gem 'bcrypt', '~> 3.1.7'
 
-# Utilitários
-gem 'annotate'
-gem 'pagy', '>= 5.10'
+# Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
+gem 'image_processing', '~> 1.2'
 
-# Processamento de Imagens
-gem 'image_processing'
+# Use Shrine for file uploads [https://shrinerb.com]
 gem 'shrine'
 
-# Visualização de Dados
+# Use Chartkick for charts [https://chartkick.com]
 gem 'chartkick'
+
+# Use Groupdate for time-based grouping [https://github.com/ankane/groupdate]
 gem 'groupdate'
 
+# Use Config for configuration [https://github.com/rubyconfig/config]
 gem 'config'
+
+# Use Devise for authentication [https://github.com/heartcombo/devise]
+gem 'devise'
+
+# Use Pundit for authorization [https://github.com/varvet/pundit]
+gem 'pundit'
+
+# Use Heroicon for icons [https://heroicons.com]
+gem 'heroicon'
+
+# Use Simple Calendar for calendar views [https://github.com/excid3/simple_calendar]
+gem 'simple_calendar', '~> 2.4'
+
+# Use Tailwind CSS for styling [https://tailwindcss.com]
+gem 'tailwindcss-rails'
+
+# Use View Component for reusable components [https://viewcomponent.org]
+gem 'view_component'
+
+# Use Simple Form for forms [https://github.com/plataformatec/simple_form]
+gem 'simple_form'
+
+# Use Validates Timeliness for date/time validation [https://github.com/adzap/validates_timeliness]
+gem 'validates_timeliness'
+
+# Use Sidekiq for background jobs [https://sidekiq.org]
+gem 'sidekiq'
+
+# Use Annotate for model annotations [https://github.com/ctran/annotate_models]
+gem 'annotate'
+
+# Use Pagy for pagination [https://github.com/ddnexus/pagy]
+gem 'pagy'
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
-  gem 'debug', platforms: %i[mri windows]
-  gem 'factory_bot_rails'
-  gem 'faker'
-  gem 'rspec-rails'
+  gem 'debug', platforms: %i[mri mingw x64_mingw]
 end
 
 group :development do
@@ -91,16 +112,24 @@ group :development do
 
   # Speed up commands on slow machines / big apps [https://github.com/rails/spring]
   # gem "spring"
-  gem 'bullet'
-  gem 'rubocop', require: false
-  gem 'rubocop-rails', require: false
-  gem 'rubocop-rspec', require: false
 end
 
 group :test do
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem 'capybara'
-  gem 'selenium-webdriver'
-end
 
-gem 'webpacker', '~> 5.4'
+  # Use Factory Bot for test data [https://github.com/thoughtbot/factory_bot]
+  gem 'factory_bot_rails'
+
+  # Use Faker for test data [https://github.com/faker-ruby/faker]
+  gem 'faker'
+
+  # Use RSpec for testing [https://github.com/rspec/rspec-rails]
+  gem 'rspec-rails'
+
+  # Use Bullet for N+1 query detection [https://github.com/flyerhzm/bullet]
+  gem 'bullet'
+
+  # Use RuboCop for code linting [https://github.com/rubocop/rubocop]
+  gem 'rubocop'
+end
