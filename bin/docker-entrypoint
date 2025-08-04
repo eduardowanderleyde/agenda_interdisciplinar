@@ -10,6 +10,10 @@ if [ "${1}" == "./bin/rails" ] && [ "${2}" == "server" ]; then
   if [ -n "$DATABASE_URL" ]; then
     echo "DATABASE_URL found, preparing database..."
     ./bin/rails db:prepare
+    
+    # Also run migrations to ensure database is up to date
+    echo "Running migrations..."
+    ./bin/rails db:migrate
   else
     echo "No DATABASE_URL found, skipping database preparation..."
   fi
