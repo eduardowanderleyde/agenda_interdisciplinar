@@ -1,81 +1,53 @@
-# syntax = docker/dockerfile:1
+# Use a simple base image
+FROM debian:bullseye-slim
 
-# Make sure RUBY_VERSION matches the Ruby version in .ruby-version and Gemfile
-ARG RUBY_VERSION=3.2.2
-
-# Use Ubuntu base instead of Ruby slim to avoid Docker Hub rate limits
-FROM ubuntu:22.04 as base
-
-# Install Ruby and essential packages
+# Install system dependencies
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y \
-    ruby \
-    ruby-dev \
+    curl \
+    gnupg \
+    ca-certificates \
     build-essential \
     libpq-dev \
     libvips \
-    curl \
     git \
     postgresql-client \
     && rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
+# Install Ruby 3.2.2 using rbenv
+RUN curl -fsSL https://github.com/rbenv/rbenv-installer/raw/HEAD/bin/rbenv-installer | bash && \
+    echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc && \
+    echo 'eval "$(rbenv init -)"' >> ~/.bashrc && \
+    export PATH="$HOME/.rbenv/bin:$PATH" && \
+    eval "$(rbenv init -)" && \
+    rbenv install 3.2.2 && \
+    rbenv global 3.2.2 && \
+    gem install bundler
+
 # Set working directory
 WORKDIR /rails
 
-# Install bundler
-RUN gem install bundler
-
-# Throw-away build stage to reduce size of final image
-FROM base as build
-
-# Install packages needed to build gems and node modules
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential curl git libpq-dev libvips node-gyp pkg-config python-is-python3
-
-# Install JavaScript dependencies
-ARG NODE_VERSION=23.3.0
-ARG YARN_VERSION=1.22.22
-ENV PATH=/usr/local/node/bin:$PATH
-RUN curl -sL https://github.com/nodenv/node-build/archive/master.tar.gz | tar xz -C /tmp/ && \
-    /tmp/node-build-master/bin/node-build "${NODE_VERSION}" /usr/local/node && \
-    npm install -g yarn@$YARN_VERSION && \
-    rm -rf /tmp/node-build-master
-
-# Install application gems
+# Copy Gemfile and install gems
 COPY Gemfile Gemfile.lock ./
-RUN bundle install && \
-    rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
-    bundle exec bootsnap precompile --gemfile
+RUN export PATH="$HOME/.rbenv/bin:$PATH" && \
+    eval "$(rbenv init -)" && \
+    bundle install
 
 # Copy application code
 COPY . .
 
-# Precompile bootsnap code for faster boot times
-RUN bundle exec bootsnap precompile app/ lib/
-
-# Skip assets precompilation during build - will be done at runtime
-RUN echo "Skipping assets precompilation during build - will be done at runtime"
-
-# Final stage for app image
-FROM base
-
-# Install packages needed for deployment
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl libvips postgresql-client && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
-
-# Copy built artifacts: gems, application
-COPY --from=build /usr/local/bundle /usr/local/bundle
-COPY --from=build /rails /rails
-
-# Run and own only the runtime files as a non-root user for security
+# Create rails user
 RUN useradd rails --create-home --shell /bin/bash && \
-    chown -R rails:rails db log storage tmp public
+    chown -R rails:rails /rails
 USER rails:rails
 
-# Entrypoint prepares the database.
+# Set environment
+ENV PATH="/home/rails/.rbenv/bin:$PATH"
+ENV RAILS_ENV=production
+
+# Entrypoint prepares the database
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 
-# Start the server by default, this can be overwritten at runtime
+# Start the server
 EXPOSE 3000
 CMD ["./bin/rails", "server"]
