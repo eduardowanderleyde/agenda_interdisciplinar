@@ -2,21 +2,28 @@
 
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version and Gemfile
 ARG RUBY_VERSION=3.2.2
-FROM registry.docker.com/library/ruby:$RUBY_VERSION-slim as base
 
-# Rails app lives here
+# Use Ubuntu base instead of Ruby slim to avoid Docker Hub rate limits
+FROM ubuntu:22.04 as base
+
+# Install Ruby and essential packages
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y \
+    ruby \
+    ruby-dev \
+    build-essential \
+    libpq-dev \
+    libvips \
+    curl \
+    git \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+# Set working directory
 WORKDIR /rails
 
-# Set production environment
-ENV RAILS_ENV="production" \
-    BUNDLE_DEPLOYMENT="1" \
-    BUNDLE_PATH="/usr/local/bundle" \
-    BUNDLE_WITHOUT="development" \
-    NODE_OPTIONS="--openssl-legacy-provider" \
-    # Force PostgreSQL to use TCP instead of socket
-    PGHOST="" \
-    PGPORT="" \
-    PGDATABASE=""
+# Install bundler
+RUN gem install bundler
 
 # Throw-away build stage to reduce size of final image
 FROM base as build
@@ -39,10 +46,6 @@ COPY Gemfile Gemfile.lock ./
 RUN bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
     bundle exec bootsnap precompile --gemfile
-
-# Install node modules
-COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
 
 # Copy application code
 COPY . .
@@ -70,7 +73,7 @@ RUN useradd rails --create-home --shell /bin/bash && \
     chown -R rails:rails db log storage tmp public
 USER rails:rails
 
-# Entrypoint prepares the database and compiles assets
+# Entrypoint prepares the database.
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 
 # Start the server by default, this can be overwritten at runtime
