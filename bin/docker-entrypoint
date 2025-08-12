@@ -6,16 +6,23 @@ rm -f /rails/tmp/pids/server.pid
 
 # If running the rails server then create or migrate existing database
 if [ "${1}" == "./bin/rails" ] && [ "${2}" == "server" ]; then
-  # Only run db:prepare if DATABASE_URL is available
+  # Only run database operations if DATABASE_URL is available
   if [ -n "$DATABASE_URL" ]; then
-    echo "DATABASE_URL found, preparing database..."
-    ./bin/rails db:prepare
+    echo "DATABASE_URL found, setting up database..."
     
-    # Also run migrations to ensure database is up to date
+    # First create the database if it doesn't exist
+    echo "Creating database if it doesn't exist..."
+    ./bin/rails db:create 2>/dev/null || echo "Database already exists or creation failed"
+    
+    # Then run migrations
     echo "Running migrations..."
     ./bin/rails db:migrate
+    
+    # Finally seed if needed
+    echo "Seeding database..."
+    ./bin/rails db:seed 2>/dev/null || echo "Seeding completed or failed"
   else
-    echo "No DATABASE_URL found, skipping database preparation..."
+    echo "No DATABASE_URL found, skipping database setup..."
   fi
   
   # Skip assets compilation for now to get deploy working
